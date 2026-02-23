@@ -9,9 +9,11 @@ import net.minecraftforge.fml.common.Mod;
 import org.merlin204.mef.api.animation.entity.MoreStunType;
 import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 
+import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +46,24 @@ public class ModEvents {
         event.getMap().put(EntityType.ZOMBIFIED_PIGLIN, biped);
 
 
+    }
+
+    /**
+     * 添加默认的弹反动画
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void ParryAnimationRegistryEvent(ParryAnimationRegistryEvent event) {
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SHIELD,SHIELD_PARRY);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.LONGSWORD,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.AXE,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.DAGGER,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SWORD,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.TACHI,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.TRIDENT,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.UCHIGATANA,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.HOE,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.PICKAXE,PARRY_ONE_HAND);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SHOVEL,PARRY_ONE_HAND);
     }
 
 

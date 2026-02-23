@@ -6,6 +6,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.merlin204.mef.api.animation.entity.MEFPlayerAPI;
 import org.merlin204.mef.epicfight.MEFAnimations;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.client.ClientEngine;
@@ -26,7 +27,7 @@ public class ClientInputManager {
 
 
             while (MEFKeyMappings.PARRY.consumeClick()) {
-                patch.playAnimationSynchronized(MEFAnimations.SHIELD_PARRY,0);
+                MEFPlayerAPI.tryPlayParryAnimation(patch);
             }
 
 

@@ -24,6 +24,7 @@ import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class MEFAnimations {
     public static AnimationManager.AnimationAccessor<MEFActionAnimation> SHIELD_PARRY;
+    public static AnimationManager.AnimationAccessor<MEFActionAnimation> PARRY_ONE_HAND;
     public static AnimationManager.AnimationAccessor<ActionAnimation> BIPED_BE_PARRIED_R;
     public static AnimationManager.AnimationAccessor<ActionAnimation> BIPED_BE_PARRIED_L;
     public static AnimationManager.AnimationAccessor<ActionAnimation> BIPED_BE_PARRIED_M;
@@ -33,6 +34,8 @@ public class MEFAnimations {
 
         SHIELD_PARRY = builder.nextAccessor("player/shield_parry", accessor -> new MEFActionAnimation(0.1F, accessor, Armatures.BIPED)
                 .addDefenseTimePair(DefenseTimePair.create(30/60F,40/60F).addDefenseConditions(FRONT).addDefenseSuccessEvents(CLASH,PARRY,PERFECT_PARRY)));
+        PARRY_ONE_HAND = builder.nextAccessor("player/parry_one_hand", accessor -> new MEFActionAnimation(0.1F, accessor, Armatures.BIPED)
+                .addDefenseTimePair(DefenseTimePair.create(10/60F,20/60F).addDefenseConditions(FRONT).addDefenseSuccessEvents(CLASH,PARRY)));
         BIPED_BE_PARRIED_R = builder.nextAccessor("biped/be_parried_r", accessor -> new ActionAnimation(0.15F, accessor, Armatures.BIPED));
         BIPED_BE_PARRIED_L = builder.nextAccessor("biped/be_parried_l", accessor -> new ActionAnimation(0.15F, accessor, Armatures.BIPED));
         BIPED_BE_PARRIED_M = builder.nextAccessor("biped/be_parried_m", accessor -> new ActionAnimation(0.15F, accessor, Armatures.BIPED));
