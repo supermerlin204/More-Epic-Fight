@@ -6,10 +6,9 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.merlin204.mef.api.animation.entity.MEFPlayerAPI;
+import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.epicfight.MEFAnimations;
 import org.merlin204.mef.main.MoreEpicFightMod;
-import yesman.epicfight.client.ClientEngine;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 
@@ -27,9 +26,12 @@ public class ClientInputManager {
 
 
             while (MEFKeyMappings.PARRY.consumeClick()) {
-                MEFPlayerAPI.tryPlayParryAnimation(patch);
+                MEFEntityAPI.tryPlayParryAnimation(patch);
             }
 
+            while (MEFKeyMappings.EXECUTE.consumeClick()) {
+                MEFEntityAPI.tryPlayExecuteAnimation(patch);
+            }
 
         }
     }

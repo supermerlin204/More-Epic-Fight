@@ -14,12 +14,13 @@ import org.lwjgl.glfw.GLFW;
 public class MEFKeyMappings {
 
     public static final KeyMapping PARRY = new CombatKeyMapping("key.mef.parry", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_LEFT, "key.mef.common");
-
+    public static final KeyMapping EXECUTE = new CombatKeyMapping("key.mef.execute", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputConstants.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_RIGHT, "key.mef.common");
 
     @SubscribeEvent
     public static void registerKeys(RegisterKeyMappingsEvent event) {
 
         event.register(PARRY);
+        event.register(EXECUTE);
 
     }
 

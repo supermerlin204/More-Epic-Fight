@@ -1,12 +1,12 @@
 package org.merlin204.mef.event;
 
 import net.minecraft.world.entity.EntityType;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-import org.merlin204.mef.api.animation.entity.MoreStunType;
+import org.merlin204.mef.api.entity.MoreStunType;
+import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 
 import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
@@ -18,7 +18,7 @@ import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.merlin204.mef.api.animation.entity.MoreStunType.*;
+import static org.merlin204.mef.api.entity.MoreStunType.*;
 import static org.merlin204.mef.epicfight.MEFAnimations.*;
 
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -32,7 +32,9 @@ public class ModEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void moreStunTypeRegistry(MoreStunTypeRegistryEvent event) {
         Map<MoreStunType, AnimationManager.AnimationAccessor<? extends StaticAnimation>> biped = new HashMap<>(Map.of(
-                BE_PARRIED_L, BIPED_BE_PARRIED_L, BE_PARRIED_R, BIPED_BE_PARRIED_R, BE_PARRIED_M, BIPED_BE_PARRIED_M));
+                BE_PARRIED_L, BIPED_BE_PARRIED_L, BE_PARRIED_R, BIPED_BE_PARRIED_R, BE_PARRIED_M, BIPED_BE_PARRIED_M,
+                BE_EXECUTED_START,BIPED_BE_EXECUTED_START,BE_EXECUTED_END,BIPED_BE_EXECUTED_END
+                ));
         event.getMap().put(EntityType.PLAYER,biped);
         event.getMap().put(EntityType.ZOMBIE,biped);
         event.getMap().put(EntityType.HUSK, biped);
@@ -67,6 +69,28 @@ public class ModEvents {
     }
 
 
+    /**
+     * 添加默认的处决动画
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void ExecuteAnimationRegistryEvent(ExecuteAnimationRegistryEvent event) {
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.NOT_WEAPON,FIST_EXECUTE);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.FIST,FIST_EXECUTE);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.LONGSWORD,ONE_HAND_EXECUTE);
+
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.DAGGER,ONE_HAND_EXECUTE);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SWORD,ONE_HAND_EXECUTE);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.TACHI,ONE_HAND_EXECUTE);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.TRIDENT,ONE_HAND_EXECUTE);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.UCHIGATANA,ONE_HAND_EXECUTE);
+
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SHOVEL,ONE_HAND_EXECUTE_HARD);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.AXE,ONE_HAND_EXECUTE_HARD);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.HOE,ONE_HAND_EXECUTE_HARD);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.PICKAXE,ONE_HAND_EXECUTE_HARD);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SPEAR,ONE_HAND_EXECUTE_HARD);
+        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.GREATSWORD,ONE_HAND_EXECUTE_HARD);
+    }
 
 
 }

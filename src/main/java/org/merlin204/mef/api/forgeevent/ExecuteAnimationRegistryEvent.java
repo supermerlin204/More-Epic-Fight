@@ -11,13 +11,13 @@ import java.util.Map;
 
 
 /**
- * 添加弹反动画
+ * 添加处决动画
  */
-public class ParryAnimationRegistryEvent extends Event implements IModBusEvent {
+public class ExecuteAnimationRegistryEvent extends Event implements IModBusEvent {
     private final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> weaponCategoryMap;
     private final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> classMap;
 
-    public ParryAnimationRegistryEvent(Map<WeaponCategory, AnimationManager.AnimationAccessor<? extends StaticAnimation>> weaponCategoryMap, Map<Class<? extends Item>, AnimationManager.AnimationAccessor<? extends StaticAnimation>> classMap) {
+    public ExecuteAnimationRegistryEvent(Map<WeaponCategory, AnimationManager.AnimationAccessor<? extends StaticAnimation>> weaponCategoryMap, Map<Class<? extends Item>, AnimationManager.AnimationAccessor<? extends StaticAnimation>> classMap) {
         this.weaponCategoryMap = weaponCategoryMap;
         this.classMap = classMap;
     }

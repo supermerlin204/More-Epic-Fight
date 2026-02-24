@@ -1,4 +1,4 @@
-package org.merlin204.mef.api.animation.entity;
+package org.merlin204.mef.api.entity;
 
 import yesman.epicfight.api.animation.LivingMotion;
 

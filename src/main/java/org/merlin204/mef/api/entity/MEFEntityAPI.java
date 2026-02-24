@@ -1,0 +1,163 @@
+package org.merlin204.mef.api.entity;
+
+
+import com.google.common.collect.Maps;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraftforge.fml.ModLoader;
+import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
+import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
+import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
+import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.capabilities.item.WeaponCategory;
+
+import java.util.Map;
+
+/**
+ * MEF与实体有关的逻辑集
+ */
+public class MEFEntityAPI {
+    //存储更多硬直动画的map
+    private static final Map<EntityType<?>, Map<MoreStunType, AnimationManager.AnimationAccessor<?extends StaticAnimation>>> MORE_STUN_TYPE_MAP = Maps.newHashMap();
+
+
+    //存储弹反动画的map
+    private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
+    private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> PARRY_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
+
+    //存储处决动画的map
+    private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
+    private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
+
+    /**
+     * 逻辑集的初始化
+     */
+    public static void init(){
+        Map<EntityType<?>, Map<MoreStunType, AnimationManager.AnimationAccessor<?extends StaticAnimation>>> registry = Maps.newHashMap();
+
+        MoreStunTypeRegistryEvent moreStunTypeRegistryEvent = new MoreStunTypeRegistryEvent(registry);
+        ModLoader.get().postEvent(moreStunTypeRegistryEvent);
+
+        MORE_STUN_TYPE_MAP.putAll(registry);
+
+        Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> parryWeaponCategory = Maps.newHashMap();
+        Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> parryClassMap = Maps.newHashMap();
+
+        ParryAnimationRegistryEvent parryAnimationRegistryEvent = new ParryAnimationRegistryEvent(parryWeaponCategory, parryClassMap);
+        ModLoader.get().postEvent(parryAnimationRegistryEvent);
+
+        PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES.putAll(parryWeaponCategory);
+        PARRY_ANIMATIONS_WITH_CLASS.putAll(parryClassMap);
+
+        Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> executeWeaponCategory = Maps.newHashMap();
+        Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> executeClassMap = Maps.newHashMap();
+
+        ExecuteAnimationRegistryEvent executeAnimationRegistryEvent = new ExecuteAnimationRegistryEvent(executeWeaponCategory, executeClassMap);
+        ModLoader.get().postEvent(executeAnimationRegistryEvent);
+
+        EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.putAll(executeWeaponCategory);
+        EXECUTE_ANIMATIONS_WITH_CLASS.putAll(executeClassMap);
+
+
+    }
+
+    /**
+     * 根据实体手中物品尝试播放处决动画,返回是否成功播放
+     * 动画选取优先级顺序为主手物品类-主手武器类型-副手物品类-副手武器类型-
+     */
+    public static boolean tryPlayExecuteAnimation(LivingEntityPatch<?> patch){
+        CapabilityItem main = patch.getAdvancedHoldingItemCapability(InteractionHand.MAIN_HAND);
+        CapabilityItem off = patch.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
+        Class<? extends Item> mainClass = patch.getAdvancedHoldingItemStack(InteractionHand.MAIN_HAND).getItem().getClass();
+        Class<? extends Item> offClass = patch.getAdvancedHoldingItemStack(InteractionHand.OFF_HAND).getItem().getClass();
+        AnimationManager.AnimationAccessor<?extends StaticAnimation> animationAccessor = null;
+
+        if (EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.containsKey(off.getWeaponCategory())){
+            animationAccessor = EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.get(off.getWeaponCategory());
+        }
+        if (EXECUTE_ANIMATIONS_WITH_CLASS.containsKey(offClass)){
+            animationAccessor = EXECUTE_ANIMATIONS_WITH_CLASS.get(offClass);
+        }
+        if (EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.containsKey(main.getWeaponCategory())){
+            animationAccessor = EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.get(main.getWeaponCategory());
+        }
+        if (EXECUTE_ANIMATIONS_WITH_CLASS.containsKey(mainClass)){
+            animationAccessor = EXECUTE_ANIMATIONS_WITH_CLASS.get(mainClass);
+        }
+
+        if (animationAccessor != null){
+            patch.playAnimationSynchronized(animationAccessor,0);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 根据实体手中物品尝试播放弹反动画,返回是否成功播放
+     * 动画选取优先级顺序为副手物品类-副手武器类型-主手物品类-主手武器类型
+     */
+    public static boolean tryPlayParryAnimation(LivingEntityPatch<?> patch){
+        CapabilityItem main = patch.getAdvancedHoldingItemCapability(InteractionHand.MAIN_HAND);
+        CapabilityItem off = patch.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
+        Class<? extends Item> mainClass = patch.getAdvancedHoldingItemStack(InteractionHand.MAIN_HAND).getItem().getClass();
+        Class<? extends Item> offClass = patch.getAdvancedHoldingItemStack(InteractionHand.OFF_HAND).getItem().getClass();
+        AnimationManager.AnimationAccessor<?extends StaticAnimation> animationAccessor = null;
+        if (PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES.containsKey(main.getWeaponCategory())){
+            animationAccessor = PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES.get(main.getWeaponCategory());
+        }
+        if (PARRY_ANIMATIONS_WITH_CLASS.containsKey(mainClass)){
+            animationAccessor = PARRY_ANIMATIONS_WITH_CLASS.get(mainClass);
+        }
+        if (PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES.containsKey(off.getWeaponCategory())){
+            animationAccessor = PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES.get(off.getWeaponCategory());
+        }
+        if (PARRY_ANIMATIONS_WITH_CLASS.containsKey(offClass)){
+            animationAccessor = PARRY_ANIMATIONS_WITH_CLASS.get(offClass);
+        }
+
+        if (animationAccessor != null){
+            patch.playAnimationSynchronized(animationAccessor,0);
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * 获取实体的更多硬直动画
+     */
+    public static AnimationManager.AnimationAccessor<? extends StaticAnimation> getMoreStunAnimation(LivingEntityPatch<?> entityPatch, MoreStunType moreStunType){
+        if (MORE_STUN_TYPE_MAP.containsKey(entityPatch.getOriginal().getType())){
+            return MORE_STUN_TYPE_MAP.get(entityPatch.getOriginal().getType()).get(moreStunType);
+        }
+        return null;
+    }
+    /**
+     * 使一个实体播放更多硬直动画,返回是否成功播放硬直
+     */
+    public static boolean playMoreStunAnimation(LivingEntityPatch<?> entityPatch, MoreStunType moreStunType){
+        if (getMoreStunAnimation(entityPatch,moreStunType) != null){
+            entityPatch.playAnimationSynchronized(getMoreStunAnimation(entityPatch,moreStunType),0);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 使一个实体被弹反的方法,返回是否成功播放弹反动画
+     */
+    public static boolean beParried(LivingEntityPatch<?> entityPatch){
+        //TODO Arc来补个判断攻击方向
+        MoreStunType moreStunType = MoreStunType.BE_PARRIED_L;
+        if (getMoreStunAnimation(entityPatch,moreStunType) != null){
+            entityPatch.playAnimationSynchronized(getMoreStunAnimation(entityPatch,moreStunType),0);
+            return true;
+        }
+        return false;
+    }
+
+}

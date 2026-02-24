@@ -1,0 +1,20 @@
+package org.merlin204.mef.registry;
+
+import net.minecraft.world.effect.MobEffect;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+import org.merlin204.mef.effect.MEFStunEffect;
+import org.merlin204.mef.main.MoreEpicFightMod;
+
+public class MEFMobEffects {
+
+    public static final DeferredRegister<MobEffect> EFFECTS =
+            DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, MoreEpicFightMod.MOD_ID);
+
+    // 注册眩晕效果
+    public static final RegistryObject<MobEffect> STUN =
+            EFFECTS.register("mef_stun", MEFStunEffect::new);
+
+
+}

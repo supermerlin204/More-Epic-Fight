@@ -1,7 +1,6 @@
 package org.merlin204.mef.api.animation;
 
 import org.merlin204.mef.api.animation.defense.DefenseTimePair;
-import org.merlin204.mef.api.animation.defense.MEFAnimationManager;
 import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 
