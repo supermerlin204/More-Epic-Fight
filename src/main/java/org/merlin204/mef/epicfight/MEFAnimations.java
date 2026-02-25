@@ -110,7 +110,9 @@ public class MEFAnimations {
      * 防御成功事件示例：弹反
      */
     public static DefenseSuccessEvent<?> PARRY = DefenseSuccessEvent.SimpleEvent.create((ownerPatch, attackEntity, damageSource) ->{
-        EpicFightCapabilities.getUnparameterizedEntityPatch(attackEntity, LivingEntityPatch.class).ifPresent(MEFEntityAPI::beParried);
+        if (attackEntity instanceof LivingEntity livingEntity){
+            MEFEntityAPI.beParried(livingEntity);
+        }
     });
 
     /**

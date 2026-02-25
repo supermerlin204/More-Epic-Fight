@@ -1,6 +1,7 @@
 package org.merlin204.mef.event;
 
 import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -10,6 +11,9 @@ import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 
 import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
+import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
+import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -25,6 +29,17 @@ import static org.merlin204.mef.epicfight.MEFAnimations.*;
 public class ModEvents {
 
 
+    /**
+     * 为所有的EF人型实体添加更多硬直动画
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void staminaTypeRegistry(StaminaTypeRegistryEvent event) {
+
+        event.getMap().put(EntityType.PIG,new StaminaType(20,0));
+
+
+
+    }
 
     /**
      * 为所有的EF人型实体添加更多硬直动画

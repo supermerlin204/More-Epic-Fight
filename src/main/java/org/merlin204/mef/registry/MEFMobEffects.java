@@ -12,9 +12,13 @@ public class MEFMobEffects {
     public static final DeferredRegister<MobEffect> EFFECTS =
             DeferredRegister.create(ForgeRegistries.MOB_EFFECTS, MoreEpicFightMod.MOD_ID);
 
-    // 注册眩晕效果
+    // 眩晕效果
     public static final RegistryObject<MobEffect> STUN =
-            EFFECTS.register("mef_stun", MEFStunEffect::new);
+            EFFECTS.register("stun", MEFStunEffect::new);
+
+    // 倒地效果
+    public static final RegistryObject<MobEffect> KNOCKDOWN =
+            EFFECTS.register("knockdown", MEFStunEffect::new);
 
 
 }

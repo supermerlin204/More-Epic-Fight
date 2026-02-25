@@ -3,14 +3,20 @@ package org.merlin204.mef.api.entity;
 
 import com.google.common.collect.Maps;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.fml.ModLoader;
 import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
+import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
+import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.registry.MEFMobEffects;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
@@ -23,7 +29,8 @@ import java.util.Map;
 public class MEFEntityAPI {
     //存储更多硬直动画的map
     private static final Map<EntityType<?>, Map<MoreStunType, AnimationManager.AnimationAccessor<?extends StaticAnimation>>> MORE_STUN_TYPE_MAP = Maps.newHashMap();
-
+    //存储耐力类型动画的map
+    private static final Map<EntityType<?>, StaminaType> STAMINA_TYPE_MAP = Maps.newHashMap();
 
     //存储弹反动画的map
     private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
@@ -33,16 +40,29 @@ public class MEFEntityAPI {
     private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
     private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
 
+
+
+
+
     /**
      * 逻辑集的初始化
      */
     public static void init(){
-        Map<EntityType<?>, Map<MoreStunType, AnimationManager.AnimationAccessor<?extends StaticAnimation>>> registry = Maps.newHashMap();
 
-        MoreStunTypeRegistryEvent moreStunTypeRegistryEvent = new MoreStunTypeRegistryEvent(registry);
+        Map<EntityType<?>, StaminaType> staminaTypeRegistry = Maps.newHashMap();
+
+        StaminaTypeRegistryEvent staminaTypeRegistryEvent = new StaminaTypeRegistryEvent(staminaTypeRegistry);
+        ModLoader.get().postEvent(staminaTypeRegistryEvent);
+
+        STAMINA_TYPE_MAP.putAll(staminaTypeRegistry);
+
+
+        Map<EntityType<?>, Map<MoreStunType, AnimationManager.AnimationAccessor<?extends StaticAnimation>>> moreStunTypeRegistry = Maps.newHashMap();
+
+        MoreStunTypeRegistryEvent moreStunTypeRegistryEvent = new MoreStunTypeRegistryEvent(moreStunTypeRegistry);
         ModLoader.get().postEvent(moreStunTypeRegistryEvent);
 
-        MORE_STUN_TYPE_MAP.putAll(registry);
+        MORE_STUN_TYPE_MAP.putAll(moreStunTypeRegistry);
 
         Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> parryWeaponCategory = Maps.newHashMap();
         Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> parryClassMap = Maps.newHashMap();
@@ -63,6 +83,15 @@ public class MEFEntityAPI {
         EXECUTE_ANIMATIONS_WITH_CLASS.putAll(executeClassMap);
 
 
+    }
+
+
+
+    /**
+     * 获取一个实体所绑定的耐力类型
+     */
+    public static StaminaType getStaminaTypeByEntityType(EntityType<?> entityType){
+        return STAMINA_TYPE_MAP.get(entityType);
     }
 
     /**
@@ -148,16 +177,17 @@ public class MEFEntityAPI {
     }
 
     /**
-     * 使一个实体被弹反的方法,返回是否成功播放弹反动画
+     * 使一个实体被弹反的方法,返回是否成功被弹反
      */
-    public static boolean beParried(LivingEntityPatch<?> entityPatch){
+    public static boolean beParried(LivingEntity livingEntity){
         //TODO Arc来补个判断攻击方向
         MoreStunType moreStunType = MoreStunType.BE_PARRIED_L;
-        if (getMoreStunAnimation(entityPatch,moreStunType) != null){
-            entityPatch.playAnimationSynchronized(getMoreStunAnimation(entityPatch,moreStunType),0);
+        LivingEntityPatch<?> livingEntityPatch = EpicFightCapabilities.getEntityPatch(livingEntity, LivingEntityPatch.class);
+        if (livingEntityPatch != null && getMoreStunAnimation(livingEntityPatch,moreStunType) != null){
+            livingEntityPatch.playAnimationSynchronized(getMoreStunAnimation(livingEntityPatch,moreStunType),0);
             return true;
         }
-        return false;
+        return livingEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),80,0));
     }
 
 }

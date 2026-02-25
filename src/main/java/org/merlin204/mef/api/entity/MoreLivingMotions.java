@@ -5,10 +5,8 @@ import yesman.epicfight.api.animation.LivingMotion;
 public enum MoreLivingMotions implements LivingMotion {
 
 
-    IDLE_KNOCK,
     WONDER_R,
-    WONDER_L,
-    BLOCK;
+    WONDER_L;
 
     final int id;
 
