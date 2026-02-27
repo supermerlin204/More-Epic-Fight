@@ -4,6 +4,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.merlin204.mef.effect.MEFKnockdownEffect;
 import org.merlin204.mef.effect.MEFStunEffect;
 import org.merlin204.mef.main.MoreEpicFightMod;
 
@@ -18,7 +19,7 @@ public class MEFMobEffects {
 
     // 倒地效果
     public static final RegistryObject<MobEffect> KNOCKDOWN =
-            EFFECTS.register("knockdown", MEFStunEffect::new);
+            EFFECTS.register("knockdown", MEFKnockdownEffect::new);
 
 
 }

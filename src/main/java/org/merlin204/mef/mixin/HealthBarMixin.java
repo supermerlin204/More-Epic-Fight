@@ -15,6 +15,8 @@ import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.capability.MEFCapabilities;
+import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -37,6 +39,8 @@ public class HealthBarMixin {
     private static final ResourceLocation BAR = ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID,"textures/gui/bar.png");
     @Unique
     private static final ResourceLocation HEALTH = ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID,"textures/gui/health.png");
+    @Unique
+    private static final ResourceLocation STAMINA = ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID,"textures/gui/stamina.png");
 
     @Inject(method = "shouldDraw", at = @At("HEAD"), remap = false, cancellable = true)
     public void mef$shouldDraw(LivingEntity entity, LivingEntityPatch<?> entityPatch, LocalPlayerPatch playerPatch, float partialTicks, CallbackInfoReturnable<Boolean> cir) {
@@ -51,8 +55,10 @@ public class HealthBarMixin {
         if (MEFEntityAPI.getStaminaTypeByEntityType(entity.getType()) != null){
             ci.cancel();
 
+            MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
+
             Matrix4f matrix = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
-                    poseStack, entity, 0.0F, entity.getBbHeight() + 0.25F, 0.0F, true, partialTicks
+                    poseStack, entity, 0.0F, entity.getBbHeight() + 0.5F, 0.0F, true, partialTicks
             );
 
             // 生命比例
@@ -60,7 +66,11 @@ public class HealthBarMixin {
             float health = entity.getHealth();
             float healthRatio = Mth.clamp(health / maxHealth, 0.0F, 1.0F);
 
-            float scale = 1;
+            float maxStamina = mefEntity.getStaminaMax();
+            float stamina = mefEntity.getStamina();
+            float staminaRatio = Mth.clamp(stamina / maxStamina, 0.0F, 1.0F);
+
+            float scale = 2F * entity.getBbWidth();
 
             float bgWidth = 1.0f * scale;
             float bgHalf = bgWidth * 0.5f;
@@ -84,6 +94,18 @@ public class HealthBarMixin {
                         fgLeft, y1, fgRight, y2,
                         0.0F, 0.0F, healthRatio, 1.0F);
             }
+            fgMaxWidth = (120f / 128f) * scale;
+            fgLeft = -bgHalf + (bgWidth - fgMaxWidth) * 0.5f;
+            fgRightFull = fgLeft + fgMaxWidth;
+
+            // 绘制耐力
+            if (staminaRatio > 0.0F) {
+                float fgRight = fgLeft + fgMaxWidth * staminaRatio;
+                drawUIAsLevelModel(matrix, STAMINA, buffers,
+                        fgLeft, y1, fgRight, y2,
+                        0.0F, 0.0F, staminaRatio, 1.0F);
+            }
+
         }
     }
 

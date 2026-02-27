@@ -2,20 +2,21 @@ package org.merlin204.mef.effect;
 
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeMap;
-import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.NotNull;
+import org.merlin204.mef.api.entity.MEFEntityAPI;
+import org.merlin204.mef.capability.MEFCapabilities;
+import org.merlin204.mef.capability.MEFEntity;
 
 
 /**
- * 硬直效果,用来控制非史诗战斗实体,算作增益避免被实体拦截,MEF开头防止重名
+ * 倒地效果,用来控制非史诗战斗实体,算作增益避免被实体拦截,MEF开头防止重名,额外执行倒地结束对应的MEF方法
  */
-public class MEFStunEffect extends MobEffect {
+public class MEFKnockdownEffect extends MobEffect {
 
-    public MEFStunEffect() {
+    public MEFKnockdownEffect() {
         super(MobEffectCategory.BENEFICIAL, 0x808080);
     }
 
@@ -49,6 +50,10 @@ public class MEFStunEffect extends MobEffect {
         entity.setNoActionTime(0);
         if (entity instanceof Mob mob) {
             mob.setNoAi(false);
+        }
+        if (MEFEntityAPI.getStaminaTypeByEntityType(entity.getType()) != null) {
+            MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
+            mefEntity.getStaminaType().whenKnockDownEnd(mefEntity);
         }
     }
 

@@ -6,8 +6,9 @@
   "refmap": "more_epic_fight.refmap.json",
   "mixins": [
     "EntityEventsMixin",
-    "EntityPatchProviderMixin"
-
+    "EntityPatchProviderMixin",
+    "MixinLivingEntity",
+    "MixinLivingEntityPatch"
   ],
   "client": [
     "HealthBarMixin"

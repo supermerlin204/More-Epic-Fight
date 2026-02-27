@@ -106,7 +106,10 @@ public class EntityEventsMixin {
                         }
                         //若未能成功播放动画或压根不是史诗战斗实体则尝试给实体添加眩晕buff
                         if (!successful){
-                            successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),60,0,false,false,false));
+                            if (hitEntity.hasEffect(MEFMobEffects.KNOCKDOWN.get())){
+                                hitEntity.removeEffect(MEFMobEffects.KNOCKDOWN.get());
+                                successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),60,0,false,false,false));
+                            }
                         }
                         //若成功播放或添加效果则取消史诗战斗的硬直
                         if (successful){

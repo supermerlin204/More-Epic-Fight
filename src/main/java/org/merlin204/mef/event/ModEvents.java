@@ -1,11 +1,14 @@
 package org.merlin204.mef.event;
 
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreStunType;
 import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
@@ -13,11 +16,13 @@ import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
 import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.api.stamina.type.DarkSoulStaminaType;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,10 +40,30 @@ public class ModEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void staminaTypeRegistry(StaminaTypeRegistryEvent event) {
 
-        event.getMap().put(EntityType.PIG,new StaminaType(20,0));
+        event.getMap().put(EntityType.PIG,new DarkSoulStaminaType(20,0));
+        event.getMap().put(EntityType.WARDEN,new DarkSoulStaminaType(20,0F));
 
 
+    }
 
+
+    /**
+     * 给存在耐力条的实体添加最大耐力值属性和耐力回复值属性
+     */
+    @SubscribeEvent
+    public static void onEntityAttributeModification(EntityAttributeModificationEvent event) {
+        MEFEntityAPI.initStaminaType();
+        for (EntityType<? extends LivingEntity> entityType : event.getTypes()) {
+            StaminaType staminaType = MEFEntityAPI.getStaminaTypeByEntityType(entityType);
+            if (staminaType != null){
+                if (!event.has(entityType, EpicFightAttributes.MAX_STAMINA.get())) {
+                    event.add(entityType, EpicFightAttributes.MAX_STAMINA.get(), staminaType.getDefaultMax());
+                }
+                if (!event.has(entityType, EpicFightAttributes.STAMINA_REGEN.get())) {
+                    event.add(entityType, EpicFightAttributes.STAMINA_REGEN.get(), staminaType.getDefaultRegen());
+                }
+            }
+        }
     }
 
     /**

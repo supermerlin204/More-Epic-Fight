@@ -19,7 +19,7 @@ import java.util.Optional;
 public class MEFCapabilities {
 
 
-    public static MEFEntity getMEFEntity(LivingEntity entity){
+    public static MEFEntity getMEFEntity(Entity entity){
         return entity.getCapability(MEFEntityCapabilityProvider.MEF_ENTITY).orElse(MEFEntity.EMPTY_MEF_ENTITY);
     }
 

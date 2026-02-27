@@ -18,8 +18,10 @@ import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
+import yesman.epicfight.world.damagesource.StunType;
 
 import java.util.Map;
 
@@ -40,8 +42,17 @@ public class MEFEntityAPI {
     private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
     private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
 
+    /**
+     * 初始化耐力类型表,提前初始化一次,确保属性正确添加
+     */
+    public static void initStaminaType(){
+        Map<EntityType<?>, StaminaType> staminaTypeRegistry = Maps.newHashMap();
 
+        StaminaTypeRegistryEvent staminaTypeRegistryEvent = new StaminaTypeRegistryEvent(staminaTypeRegistry);
+        ModLoader.get().postEvent(staminaTypeRegistryEvent);
 
+        STAMINA_TYPE_MAP.putAll(staminaTypeRegistry);
+    }
 
 
     /**
@@ -85,7 +96,34 @@ public class MEFEntityAPI {
 
     }
 
+    /**
+     * 检查玩家是否能发动弹反
+     */
+    public static boolean canParried(PlayerPatch<?> playerPatch){
+        //TODO 抛个事件
+        return playerPatch.getEntityState().canUseSkill();
+    }
 
+    /**
+     * 检查玩家是否能发动处决
+     */
+    public static boolean canExecute(PlayerPatch<?> playerPatch){
+        if (playerPatch.getTarget() == null)return false;
+        if (!playerPatch.getEntityState().canUseSkill())return false;
+        LivingEntity target = playerPatch.getTarget();
+        if (target.hasEffect(MEFMobEffects.KNOCKDOWN.get())){
+            return true;
+        }
+        LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(target, LivingEntityPatch.class);
+        if (patch != null && patch.getHitAnimation(StunType.KNOCKDOWN) != null){
+            if (patch.getAnimator().getPlayerFor(null).getRealAnimation().get() == patch.getHitAnimation(StunType.KNOCKDOWN).get()){
+                return true;
+            }
+        }
+
+        //TODO 抛个事件
+        return playerPatch.getEntityState().canUseSkill();
+    }
 
     /**
      * 获取一个实体所绑定的耐力类型
@@ -188,6 +226,18 @@ public class MEFEntityAPI {
             return true;
         }
         return livingEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),80,0));
+    }
+
+    /**
+     * 使一个实体倒地的方法,返回是否成功倒地
+     */
+    public static boolean beKnockdown(LivingEntity livingEntity){
+        LivingEntityPatch<?> livingEntityPatch = EpicFightCapabilities.getEntityPatch(livingEntity, LivingEntityPatch.class);
+        if (livingEntityPatch != null && livingEntityPatch.getHitAnimation(StunType.KNOCKDOWN)!= null){
+            livingEntityPatch.playAnimationSynchronized(livingEntityPatch.getHitAnimation(StunType.KNOCKDOWN),0);
+            return true;
+        }
+        return livingEntity.addEffect(new MobEffectInstance(MEFMobEffects.KNOCKDOWN.get(),100,0));
     }
 
 }
