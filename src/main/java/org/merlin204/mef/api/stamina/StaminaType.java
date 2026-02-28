@@ -94,4 +94,5 @@ public abstract class StaminaType {
     }
 
 
+
 }

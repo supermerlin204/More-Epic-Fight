@@ -2,7 +2,9 @@ package org.merlin204.mef.main;
 
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.merlin204.mef.api.jar.EmbeddedJarCopier;
 import org.merlin204.mef.registry.MEFMobEffects;
 
 
@@ -16,8 +18,11 @@ public class MoreEpicFightMod {
     public MoreEpicFightMod(FMLJavaModLoadingContext context) {
         IEventBus bus = context.getModEventBus();
         MEFMobEffects.EFFECTS.register(bus);
+//        bus.addListener(this::commonSetup);
 
     }
 
-
+    private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(EmbeddedJarCopier::copyJarsToMods);
+    }
 }

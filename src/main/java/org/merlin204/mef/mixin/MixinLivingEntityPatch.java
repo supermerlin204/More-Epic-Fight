@@ -45,11 +45,10 @@ public class MixinLivingEntityPatch {
 //    }
 
     @Inject(at = @At(value = "TAIL"), method = "onJoinWorld(Lnet/minecraft/world/entity/Entity;Lnet/minecraftforge/event/entity/EntityJoinLevelEvent;)V")
-    protected void mef$setLastAttackResult(Entity entity, EntityJoinLevelEvent par2, CallbackInfo ci) {
+    protected void mef$onJoinWorld(Entity entity, EntityJoinLevelEvent par2, CallbackInfo ci) {
         LivingEntityPatch<?> livingEntityPatch =  (LivingEntityPatch<?>)(Object)this;
         if (MEFEntityAPI.getStaminaTypeByEntityType(livingEntityPatch.getOriginal().getType()) != null){
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(livingEntityPatch.getOriginal());
-            mefEntity.setStamina(99999999);
         }
     }
 

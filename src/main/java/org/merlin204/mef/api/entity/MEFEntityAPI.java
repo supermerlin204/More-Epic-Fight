@@ -108,6 +108,7 @@ public class MEFEntityAPI {
      * 检查玩家是否能发动处决
      */
     public static boolean canExecute(PlayerPatch<?> playerPatch){
+        //TODO 抛个事件
         if (playerPatch.getTarget() == null)return false;
         if (!playerPatch.getEntityState().canUseSkill())return false;
         LivingEntity target = playerPatch.getTarget();
@@ -121,8 +122,15 @@ public class MEFEntityAPI {
             }
         }
 
-        //TODO 抛个事件
+
         return playerPatch.getEntityState().canUseSkill();
+    }
+
+    /**
+     * 放置耐力类型,一般情况下别用
+     */
+    public static void putStaminaTypeByEntityType(EntityType<?> entityType,StaminaType staminaType){
+        STAMINA_TYPE_MAP.put(entityType,staminaType);
     }
 
     /**

@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "more_epic_fight.refmap.json",
   "mixins": [
+    "AttachCapabilitiesEventMixin",
     "EntityEventsMixin",
     "EntityPatchProviderMixin",
     "MixinLivingEntity",

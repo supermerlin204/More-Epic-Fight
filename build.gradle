@@ -138,6 +138,11 @@ repositories {
         }
     }
 
+    exclusiveContent {
+        forRepository { maven { name = "Modrinth"; url = "https://api.modrinth.com/maven" } }
+        filter { includeGroup "maven.modrinth" }
+    }
+
     flatDir {
         dir 'libs'
     }
@@ -146,9 +151,10 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
+
     //史诗战斗20.14.8
     implementation fg.deobf("curse.maven:epic-fight-mod-405076:7584041")
-    //EFX1.1.0,开发的时候看着舒服点(失败了),这年头居然有模组没上maven
+
 
     //训练人偶,打桩用
     runtimeOnly fg.deobf("curse.maven:selene-499980:5478857")

@@ -35,7 +35,7 @@ public class ModEvents {
 
 
     /**
-     * 为所有的EF人型实体添加更多硬直动画
+     * 添加默认的耐力类型
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void staminaTypeRegistry(StaminaTypeRegistryEvent event) {

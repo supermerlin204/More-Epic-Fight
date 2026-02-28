@@ -8,6 +8,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.epicfight.IMEFPatch;
+import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 public class MEFEntity {
@@ -37,16 +40,26 @@ public class MEFEntity {
     }
 
     public StaminaType getStaminaType() {
+
+        LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(original,LivingEntityPatch.class);
+        if (patch instanceof IMEFPatch imefPatch){
+            return imefPatch.getStaminaType();
+        }
+
         return staminaType;
     }
 
     public boolean staminaIsPresent(){
-        return staminaType != null;
+        return getStaminaType() != null;
     }
 
     public void onConstruct(LivingEntity entity){
         original = entity;
         staminaType = MEFEntityAPI.getStaminaTypeByEntityType(entity.getType());
+        if (!entity.level().isClientSide){
+            setStamina(9999999);
+        }
+
     }
 
     public LivingEntity getOriginal() {
@@ -66,6 +79,7 @@ public class MEFEntity {
     }
 
     public final void setStamina(float amount){
+        if (!staminaIsPresent())return;
         float targetAmount =  Mth.clamp(amount,0,getStaminaMax());
         if (getStamina() >= 0 && targetAmount ==0){
             getStaminaType().whenZero(this);
@@ -74,10 +88,12 @@ public class MEFEntity {
     }
 
     public void saveNBTData(CompoundTag tag) {
+        if (!staminaIsPresent())return;
         tag.putFloat("mef_stamina",getStamina());
     }
 
     public void loadNBTData(CompoundTag tag) {
+        if (!staminaIsPresent())return;
         if (tag.contains("mef_stamina")){
             setStamina(tag.getFloat("mef_stamina"));
         }
@@ -85,10 +101,9 @@ public class MEFEntity {
 
     public final void tick() {
         if (original == null)return;
+
         if (!original.level().isClientSide && staminaIsPresent()){
-            //莫要诧异,这是为了确保耐力一直有在同步
-            this.setStamina(getStamina());
-            if (staminaType.canRecover(this)){
+            if (getStaminaType().canRecover(this)){
                 this.setStamina(getStamina() + getStaminaRegen());
             }
 
