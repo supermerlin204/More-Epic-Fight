@@ -24,5 +24,6 @@ public class MoreEpicFightMod {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(EmbeddedJarCopier::copyJarsToMods);
+
     }
 }

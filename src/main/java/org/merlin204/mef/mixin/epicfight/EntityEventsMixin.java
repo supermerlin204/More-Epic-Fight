@@ -1,4 +1,4 @@
-package org.merlin204.mef.mixin;
+package org.merlin204.mef.mixin.epicfight;
 
 
 import net.minecraft.world.damagesource.DamageSource;
@@ -11,6 +11,8 @@ import org.merlin204.mef.api.animation.defense.DefenseTimePair;
 import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreStunType;
+import org.merlin204.mef.capability.MEFCapabilities;
+import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.registry.MEFMobEffects;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -41,13 +43,21 @@ public class EntityEventsMixin {
         if (causingEntity != null) {
             LivingEntityPatch<?> attackerEntityPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
             if (attackerEntityPatch != null) {
-
+                StaticAnimation animation = attackerEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
+                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
+                    //TODO 只对倒地的实体造成伤害?
+                }
             }
 
             LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
             if (hitEntityPatch != null){
                 StaticAnimation animation = hitEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
                 float time = hitEntityPatch.getAnimator().getPlayerFor(null).getElapsedTime();
+                //处决时不受伤害
+                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
+                    event.setCanceled(true);
+                    ci.cancel();
+                }
                 if (animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
                     boolean successful = false;
                     for (DefenseTimePair defenseTimePair:animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
@@ -109,10 +119,16 @@ public class EntityEventsMixin {
                             if (hitEntity.hasEffect(MEFMobEffects.KNOCKDOWN.get())){
                                 hitEntity.removeEffect(MEFMobEffects.KNOCKDOWN.get());
                                 successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),60,0,false,false,false));
+                            }else if (hitEntity.hasEffect(MEFMobEffects.STUN.get())){
+                                successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),60,0,false,false,false));
                             }
                         }
-                        //若成功播放或添加效果则取消史诗战斗的硬直
+                        //若成功播放或添加效果则取消史诗战斗的硬直,并进行伤害加成
                         if (successful){
+                            if (MEFEntityAPI.getStaminaTypeByEntity(hitEntity) != null){
+                                MEFEntity hit = MEFCapabilities.getMEFEntity(hitEntity);
+                                event.setAmount(event.getAmount() + hit.getStaminaType().beExecutedDamageModifier(hit,damageSource,event.getAmount()));
+                            }
                             epicFightDamageSource.setStunType(StunType.NONE);
                         }
                     }

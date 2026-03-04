@@ -1,4 +1,4 @@
-package org.merlin204.mef.mixin;
+package org.merlin204.mef.mixin.epicfight;
 
 
 import org.merlin204.mef.api.entity.MEFEntityAPI;

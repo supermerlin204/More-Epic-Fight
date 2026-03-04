@@ -12,6 +12,12 @@ public class DarkSoulStaminaType extends StaminaType {
         super(defaultMax, defaultRegen);
     }
 
+
+    @Override
+    public float beExecutedDamageModifier(MEFEntity mefEntity, DamageSource damageSource, float amount) {
+        return mefEntity.getOriginal().getMaxHealth() * 0.15F;
+    }
+
     @Override
     public void whenHurt(MEFEntity mefEntity, DamageSource damageSource, float amount) {
         super.whenHurt(mefEntity, damageSource, amount);

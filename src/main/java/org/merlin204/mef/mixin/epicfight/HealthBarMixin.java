@@ -1,23 +1,20 @@
-package org.merlin204.mef.mixin;
+package org.merlin204.mef.mixin.epicfight;
 
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
-import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
+import org.merlin204.mef.client.render.MEFRenderTypes;
 import org.merlin204.mef.main.MoreEpicFightMod;
+import org.merlin204.mef.registry.MEFMobEffects;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,6 +25,7 @@ import yesman.epicfight.client.gui.EntityUI;
 import yesman.epicfight.client.gui.HealthBar;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.damagesource.StunType;
 
 import static yesman.epicfight.client.gui.EntityUI.drawUIAsLevelModel;
 
@@ -41,10 +39,12 @@ public class HealthBarMixin {
     private static final ResourceLocation HEALTH = ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID,"textures/gui/health.png");
     @Unique
     private static final ResourceLocation STAMINA = ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID,"textures/gui/stamina.png");
+    @Unique
+    private static final ResourceLocation EXECUTE = ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID,"textures/gui/execute.png");
 
     @Inject(method = "shouldDraw", at = @At("HEAD"), remap = false, cancellable = true)
     public void mef$shouldDraw(LivingEntity entity, LivingEntityPatch<?> entityPatch, LocalPlayerPatch playerPatch, float partialTicks, CallbackInfoReturnable<Boolean> cir) {
-        if (MEFEntityAPI.getStaminaTypeByEntityType(entity.getType()) != null){
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null){
             cir.setReturnValue(true);
             cir.cancel();
         }
@@ -52,8 +52,10 @@ public class HealthBarMixin {
 
     @Inject(method = "draw", at = @At("HEAD"), remap = false, cancellable = true)
     public void mef$draw(LivingEntity entity, LivingEntityPatch<?> entityPatch, LocalPlayerPatch playerPatch, PoseStack poseStack, MultiBufferSource buffers, float partialTicks, CallbackInfo ci) {
-        if (MEFEntityAPI.getStaminaTypeByEntityType(entity.getType()) != null){
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null){
             ci.cancel();
+
+
 
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
 
@@ -61,7 +63,7 @@ public class HealthBarMixin {
                     poseStack, entity, 0.0F, entity.getBbHeight() + 0.5F, 0.0F, true, partialTicks
             );
 
-            // 生命比例
+
             float maxHealth = entity.getMaxHealth();
             float health = entity.getHealth();
             float healthRatio = Mth.clamp(health / maxHealth, 0.0F, 1.0F);
@@ -105,12 +107,39 @@ public class HealthBarMixin {
                         fgLeft, y1, fgRight, y2,
                         0.0F, 0.0F, staminaRatio, 1.0F);
             }
+            //绘制处决图标
+            if (entity == playerPatch.getTarget() && MEFEntityAPI.canExecute(playerPatch) && entity.isAlive()){
+                float rio = mefEntity.getKnockdownTime()/100F;
 
+                if (entityPatch != null && entityPatch.getHitAnimation(StunType.KNOCKDOWN) != null && entityPatch.getAnimator().getPlayerFor(null).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)){
+                    rio = entityPatch.getAnimator().getPlayerFor(null).getElapsedTime()/ entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
+                }
+                rio = Mth.clamp(rio,0F,1F);
+                Matrix4f matrix4f = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
+                        poseStack, entity, 0.0F, entity.getBbHeight()/2, 0.0F, true, partialTicks
+                );
+                int step = (int) (59F*rio);
+
+                float size = 0.2F * scale;
+
+                mef$draw(matrix4f, EXECUTE, buffers,
+                        -size, -size, size, size,
+                        step/60F, 0.0F, (step+1)/60F, 1.0F);
+
+
+            }
         }
     }
 
 
-
+    @Unique
+    private static void mef$draw(Matrix4f matrix, ResourceLocation textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, float minU, float minV, float maxU, float maxV) {
+        VertexConsumer vertexConsumer = buffer.getBuffer(MEFRenderTypes.alwaysOnTop(textureLocation));
+        vertexConsumer.vertex(matrix, minX, minY, 0.0F).uv(minU, maxV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
+        vertexConsumer.vertex(matrix, maxX, minY, 0.0F).uv(maxU, maxV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
+        vertexConsumer.vertex(matrix, maxX, maxY, 0.0F).uv(maxU, minV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
+        vertexConsumer.vertex(matrix, minX, maxY, 0.0F).uv(minU, minV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
+    }
 
 
 

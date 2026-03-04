@@ -33,6 +33,10 @@ public class MEFKnockdownEffect extends MobEffect {
             mob.setTarget(null);           // 清除目标
             mob.getNavigation().stop();     // 停止当前路径
         }
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null){
+            MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
+            mefEntity.setKnockdownTime(mefEntity.getKnockdownTime() + 1);
+        }
 
     }
 
@@ -47,11 +51,15 @@ public class MEFKnockdownEffect extends MobEffect {
         super.removeAttributeModifiers(entity, attributeMap, amplifier);
         if (entity.level().isClientSide) return;
         //恢复
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null){
+            MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
+            mefEntity.setKnockdownTime(0);
+        }
         entity.setNoActionTime(0);
         if (entity instanceof Mob mob) {
             mob.setNoAi(false);
         }
-        if (MEFEntityAPI.getStaminaTypeByEntityType(entity.getType()) != null) {
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null) {
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
             mefEntity.getStaminaType().whenKnockDownEnd(mefEntity);
         }

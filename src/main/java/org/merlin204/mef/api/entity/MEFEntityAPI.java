@@ -4,6 +4,7 @@ package org.merlin204.mef.api.entity;
 import com.google.common.collect.Maps;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
@@ -13,6 +14,7 @@ import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
 import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.epicfight.IMEFPatch;
 import org.merlin204.mef.registry.MEFMobEffects;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -112,18 +114,15 @@ public class MEFEntityAPI {
         if (playerPatch.getTarget() == null)return false;
         if (!playerPatch.getEntityState().canUseSkill())return false;
         LivingEntity target = playerPatch.getTarget();
+        if (target.distanceTo(playerPatch.getOriginal()) > target.getBbWidth() + 2)return false;
         if (target.hasEffect(MEFMobEffects.KNOCKDOWN.get())){
             return true;
         }
         LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(target, LivingEntityPatch.class);
         if (patch != null && patch.getHitAnimation(StunType.KNOCKDOWN) != null){
-            if (patch.getAnimator().getPlayerFor(null).getRealAnimation().get() == patch.getHitAnimation(StunType.KNOCKDOWN).get()){
-                return true;
-            }
+            return patch.getAnimator().getPlayerFor(null).getRealAnimation().get() == patch.getHitAnimation(StunType.KNOCKDOWN).get();
         }
-
-
-        return playerPatch.getEntityState().canUseSkill();
+        return false;
     }
 
     /**
@@ -136,8 +135,11 @@ public class MEFEntityAPI {
     /**
      * 获取一个实体所绑定的耐力类型
      */
-    public static StaminaType getStaminaTypeByEntityType(EntityType<?> entityType){
-        return STAMINA_TYPE_MAP.get(entityType);
+    public static StaminaType getStaminaTypeByEntity(Entity entity){
+        if (EpicFightCapabilities.getEntityPatch(entity,LivingEntityPatch.class) instanceof IMEFPatch imefPatch){
+            return imefPatch.getStaminaType();
+        }
+        return STAMINA_TYPE_MAP.get(entity.getType());
     }
 
     /**

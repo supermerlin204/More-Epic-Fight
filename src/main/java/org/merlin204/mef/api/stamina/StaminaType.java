@@ -15,6 +15,13 @@ public abstract class StaminaType {
     }
 
     /**
+     * 被处决时的伤害加成
+     */
+    public float beExecutedDamageModifier(MEFEntity mefEntity, DamageSource damageSource, float amount){
+        return 0;
+    }
+
+    /**
      * 耐力值减小到0的时候
      */
     public void whenZero(MEFEntity mefEntity){

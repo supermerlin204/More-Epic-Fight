@@ -5,14 +5,18 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "more_epic_fight.refmap.json",
   "mixins": [
-    "AttachCapabilitiesEventMixin",
-    "EntityEventsMixin",
-    "EntityPatchProviderMixin",
-    "MixinLivingEntity",
-    "MixinLivingEntityPatch"
+    "epicfight.AnimationPlayerMixin",
+    "epicfight.EntityEventsMixin",
+    "epicfight.EntityPatchProviderMixin",
+    "epicfight.EntityStateMixin",
+    "epicfight.LivingEntityPatchMixin",
+    "epicfight.MobPatchMixin",
+    "epicfight.StaticAnimationMixin",
+    "minecraft.AttachCapabilitiesEventMixin",
+    "minecraft.LivingEntityMixin"
   ],
   "client": [
-    "HealthBarMixin"
+    "epicfight.HealthBarMixin"
   ],
   "injectors": {
     "defaultRequire": 1

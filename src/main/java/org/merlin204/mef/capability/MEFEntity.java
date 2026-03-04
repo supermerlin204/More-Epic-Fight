@@ -18,25 +18,37 @@ public class MEFEntity {
     public static final MEFEntity EMPTY_MEF_ENTITY = new MEFEntity();
 
 
+    //耐力值
     protected static EntityDataAccessor<Float> STAMINA;
-    protected static EntityDataAccessor<Boolean> IS_WONDER;
+    //动画播放速度(只适用于EF实体)
+    protected static EntityDataAccessor<Float> ANIMATION_SPEED;
+    //对峙时移动速度
+    protected static EntityDataAccessor<Float> WONDER_SPEED;
+    //对峙时间
     protected static EntityDataAccessor<Integer> WONDER_TIME;
-
-
+    //倒地时间(非玩家的MobEffect持续时间不会双端同步,因此需要单独记录)
+    protected static EntityDataAccessor<Integer> KNOCKDOWN_TIME;
 
     public static void initLivingEntityDataAccessor() {
         STAMINA = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.FLOAT);
-        IS_WONDER = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.BOOLEAN);
+        ANIMATION_SPEED = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.FLOAT);
+        WONDER_SPEED = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.FLOAT);
         WONDER_TIME = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.INT);
+        KNOCKDOWN_TIME = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.INT);
     }
 
     private LivingEntity original;
     private StaminaType staminaType;
 
+    //对峙随机变向,为true的时候会随机改变对峙的移动方向
+    protected boolean randomWonder;
+
     public static void createSyncedEntityData(LivingEntity livingentity) {
         livingentity.getEntityData().define(STAMINA, 0.0F);
-        livingentity.getEntityData().define(IS_WONDER, false);
+        livingentity.getEntityData().define(ANIMATION_SPEED, 1F);
+        livingentity.getEntityData().define(WONDER_SPEED, 0.5F);
         livingentity.getEntityData().define(WONDER_TIME, 0);
+        livingentity.getEntityData().define(KNOCKDOWN_TIME, 0);
     }
 
     public StaminaType getStaminaType() {
@@ -55,11 +67,10 @@ public class MEFEntity {
 
     public void onConstruct(LivingEntity entity){
         original = entity;
-        staminaType = MEFEntityAPI.getStaminaTypeByEntityType(entity.getType());
-        if (!entity.level().isClientSide){
-            setStamina(9999999);
+        staminaType = MEFEntityAPI.getStaminaTypeByEntity(entity);
+        if (!entity.level().isClientSide && staminaIsPresent()){
+            getOriginal().getEntityData().set(STAMINA,staminaType.getDefaultMax());
         }
-
     }
 
     public LivingEntity getOriginal() {
@@ -74,14 +85,84 @@ public class MEFEntity {
         return (float) getOriginal().getAttributeValue(EpicFightAttributes.STAMINA_REGEN.get());
     }
 
+    public final boolean getRandomWonder(){
+        return randomWonder;
+    }
+
+    public final void setRandomWonder(boolean b){
+        randomWonder = b;
+    }
+
+    public final int getWonderTime(){
+        if (original == null){
+            return 0;
+        }
+        return getOriginal().getEntityData().get(WONDER_TIME);
+    }
+
+    public final void setWonderTime(int amount){
+        if (original == null){
+            return;
+        }
+        getOriginal().getEntityData().set(WONDER_TIME,amount);
+    }
+
+    public final int getKnockdownTime(){
+        if (original == null){
+            return 0;
+        }
+        return getOriginal().getEntityData().get(KNOCKDOWN_TIME);
+    }
+
+    public final void setKnockdownTime(int amount){
+        if (original == null){
+            return;
+        }
+        getOriginal().getEntityData().set(KNOCKDOWN_TIME,amount);
+    }
+
+    public final float getWonderSpeed(){
+        if (original == null){
+            return 1;
+        }
+        return getOriginal().getEntityData().get(WONDER_SPEED);
+    }
+
+    public final void setWonderSpeed(float amount){
+        if (original == null){
+            return;
+        }
+        getOriginal().getEntityData().set(WONDER_SPEED,amount);
+    }
+
+    public final float getAnimationSpeed(){
+        if (original == null){
+            return 1;
+        }
+        return getOriginal().getEntityData().get(ANIMATION_SPEED);
+    }
+
+    public final void setAnimationSpeed(float amount){
+        if (original == null){
+            return;
+        }
+        getOriginal().getEntityData().set(ANIMATION_SPEED,amount);
+    }
+
     public final float getStamina(){
+        if (original == null){
+            return 0;
+        }
         return getOriginal().getEntityData().get(STAMINA);
     }
 
     public final void setStamina(float amount){
+        if (original == null){
+            return;
+        }
         if (!staminaIsPresent())return;
         float targetAmount =  Mth.clamp(amount,0,getStaminaMax());
-        if (getStamina() >= 0 && targetAmount ==0){
+        if (getStamina() > 0 && targetAmount == 0){
             getStaminaType().whenZero(this);
         }
         getOriginal().getEntityData().set(STAMINA,targetAmount);
@@ -102,8 +183,12 @@ public class MEFEntity {
     public final void tick() {
         if (original == null)return;
 
-        if (!original.level().isClientSide && staminaIsPresent()){
-            if (getStaminaType().canRecover(this)){
+        if (!original.level().isClientSide){
+            if (getWonderTime() > 0){
+                setWonderTime(getWonderTime() - 1);
+            }
+
+            if (staminaIsPresent() && getStaminaType().canRecover(this)){
                 this.setStamina(getStamina() + getStaminaRegen());
             }
 
