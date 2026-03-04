@@ -2,6 +2,7 @@ package org.merlin204.mef.world.entity.ai.goal;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
@@ -18,6 +19,7 @@ import java.util.EnumSet;
 /**
  * EF实体使用的对峙Goal,如果是IMEFPatch的话会强制给一个,不用手动加
  */
+//TODO 有耐力类型的话也强制给一个?
 public class PatchEntityWonderGoal extends Goal {
     private final LivingEntityPatch<?> entityPatch;
 
@@ -25,6 +27,12 @@ public class PatchEntityWonderGoal extends Goal {
         this.entityPatch = entityPatch;
     }
 
+    @Override
+    public void start() {
+        if (entityPatch.getOriginal() instanceof PathfinderMob pathfinderMob){
+            pathfinderMob.getNavigation().stop();
+        }
+    }
 
     @Override
     public @NotNull EnumSet<Flag> getFlags() {
@@ -71,7 +79,7 @@ public class PatchEntityWonderGoal extends Goal {
 
         if (MEFEntityAPI.getStaminaTypeByEntity(entityPatch.getOriginal()) != null){
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entityPatch.getOriginal());
-            isRandom = mefEntity.getRandomWonder();
+            isRandom = mefEntity.isRandomWonder();
             moveSpeed = moveSpeed * mefEntity.getWonderSpeed();
         }
 

@@ -44,18 +44,6 @@ public class MEFEntityAPI {
     private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
     private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
 
-    /**
-     * 初始化耐力类型表,提前初始化一次,确保属性正确添加
-     */
-    public static void initStaminaType(){
-        Map<EntityType<?>, StaminaType> staminaTypeRegistry = Maps.newHashMap();
-
-        StaminaTypeRegistryEvent staminaTypeRegistryEvent = new StaminaTypeRegistryEvent(staminaTypeRegistry);
-        ModLoader.get().postEvent(staminaTypeRegistryEvent);
-
-        STAMINA_TYPE_MAP.putAll(staminaTypeRegistry);
-    }
-
 
     /**
      * 逻辑集的初始化

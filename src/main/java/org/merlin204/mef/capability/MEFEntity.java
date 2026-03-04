@@ -85,7 +85,11 @@ public class MEFEntity {
         return (float) getOriginal().getAttributeValue(EpicFightAttributes.STAMINA_REGEN.get());
     }
 
-    public final boolean getRandomWonder(){
+    public final boolean isWonder(){
+        return getWonderTime() > 0;
+    }
+
+    public final boolean isRandomWonder(){
         return randomWonder;
     }
 

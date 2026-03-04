@@ -7,6 +7,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreLivingMotions;
 import org.merlin204.mef.api.entity.MoreStunType;
@@ -15,8 +16,10 @@ import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 
 import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
 import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
+import org.merlin204.mef.api.network.PacketHandler;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.api.stamina.type.DarkSoulStaminaType;
+import org.merlin204.mef.api.stamina.type.SekiroStaminaType;
 import org.merlin204.mef.epicfight.MEFAnimations;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
@@ -35,20 +38,7 @@ import static org.merlin204.mef.epicfight.MEFAnimations.*;
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEvents {
 
-    /**
-     * 给人型实体强上Wonder的Living
-     */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void initAnimator(InitAnimatorEvent event) {
-        if(event.getEntityPatch().getArmature() instanceof HumanoidArmature){
-            if (!event.getAnimator().getLivingAnimations().containsKey(MoreLivingMotions.WONDER_L)){
-                event.getAnimator().addLivingAnimation(MoreLivingMotions.WONDER_L, BIPED_WONDER_L);
-            }
-            if (!event.getAnimator().getLivingAnimations().containsKey(MoreLivingMotions.WONDER_R)){
-                event.getAnimator().addLivingAnimation(MoreLivingMotions.WONDER_R, BIPED_WONDER_R);
-            }
-        }
-    }
+
 
     /**
      * 添加默认的耐力类型
@@ -56,7 +46,9 @@ public class ModEvents {
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void staminaTypeRegistry(StaminaTypeRegistryEvent event) {
 
-        event.getMap().put(EntityType.IRON_GOLEM,new DarkSoulStaminaType(20,0F));
+        event.getMap().put(EntityType.IRON_GOLEM,new SekiroStaminaType(50,0F).setBarRenderType(StaminaType.BarRenderType.BOSS));
+
+        event.getMap().put(EntityType.POLAR_BEAR,new SekiroStaminaType(20,0F).setBarRenderType(StaminaType.BarRenderType.BOSS));
 
         event.getMap().put(EntityType.HUSK,new DarkSoulStaminaType(5,0F));
         event.getMap().put(EntityType.ZOMBIE,new DarkSoulStaminaType(5,0F));
@@ -128,5 +120,9 @@ public class ModEvents {
         event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.GREATSWORD,ONE_HAND_EXECUTE_HARD);
     }
 
+    @SubscribeEvent
+    public static void commonSetup(final FMLCommonSetupEvent event) {
+        PacketHandler.register();
+    }
 
 }

@@ -127,7 +127,7 @@ public class EntityEventsMixin {
                         if (successful){
                             if (MEFEntityAPI.getStaminaTypeByEntity(hitEntity) != null){
                                 MEFEntity hit = MEFCapabilities.getMEFEntity(hitEntity);
-                                event.setAmount(event.getAmount() + hit.getStaminaType().beExecutedDamageModifier(hit,damageSource,event.getAmount()));
+                                event.setAmount(hit.getStaminaType().beExecutedDamageModifier(hit,damageSource,event.getAmount()));
                             }
                             epicFightDamageSource.setStunType(StunType.NONE);
                         }

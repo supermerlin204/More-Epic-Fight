@@ -1,17 +1,32 @@
 package org.merlin204.mef.api.stamina;
 
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.LivingEntity;
 import org.merlin204.mef.capability.MEFEntity;
 
 public abstract class StaminaType {
     private final float defaultMax;
     private final float defaultRegen;
+    private BarRenderType barRenderType = BarRenderType.SMALL;
 
 
     public StaminaType(float defaultMax, float defaultRegen) {
         this.defaultMax = defaultMax;
         this.defaultRegen = defaultRegen;
+    }
+
+    /**
+     * 获取血条的渲染类型
+     */
+    public BarRenderType getBarRenderType() {
+        return barRenderType;
+    }
+
+    /**
+     * 设置血条的渲染类型
+     */
+    public StaminaType setBarRenderType(BarRenderType barRenderType) {
+        this.barRenderType = barRenderType;
+        return this;
     }
 
     /**
@@ -101,5 +116,10 @@ public abstract class StaminaType {
     }
 
 
+    public enum BarRenderType {
+        NONE,
+        BOSS,
+        SMALL
+    }
 
 }

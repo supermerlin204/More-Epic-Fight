@@ -7,11 +7,10 @@ import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.capability.MEFEntity;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 
-public class DarkSoulStaminaType extends StaminaType {
-    public DarkSoulStaminaType(float defaultMax, float defaultRegen) {
+public class KaZanPurpleStaminaType extends StaminaType {
+    public KaZanPurpleStaminaType(float defaultMax, float defaultRegen) {
         super(defaultMax, defaultRegen);
     }
-
 
     @Override
     public float beExecutedDamageModifier(MEFEntity mefEntity, DamageSource damageSource, float amount) {
@@ -43,6 +42,18 @@ public class DarkSoulStaminaType extends StaminaType {
     }
 
     @Override
+    public void whenBlock(MEFEntity mefEntity, float damage) {
+        super.whenBlock(mefEntity, damage);
+        mefEntity.setStamina(mefEntity.getStamina() - damage*0.5F);
+    }
+
+    @Override
+    public void whenBeBlocked(MEFEntity mefEntity, float damage) {
+        super.whenBeBlocked(mefEntity, damage);
+        mefEntity.setStamina(mefEntity.getStamina() - damage*0.5F);
+    }
+
+    @Override
     public void whenZero(MEFEntity mefEntity) {
         super.whenZero(mefEntity);
         MEFEntityAPI.beKnockdown(mefEntity.getOriginal());
@@ -51,6 +62,6 @@ public class DarkSoulStaminaType extends StaminaType {
     @Override
     public void whenBeParried(MEFEntity mefEntity) {
         super.whenBeParried(mefEntity);
-        mefEntity.setStamina(mefEntity.getStamina() - mefEntity.getStaminaMax()*0.35F);
+        mefEntity.setStamina(mefEntity.getStamina() - mefEntity.getStaminaMax()*0.5F);
     }
 }

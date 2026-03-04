@@ -13,6 +13,7 @@
     "epicfight.MobPatchMixin",
     "epicfight.StaticAnimationMixin",
     "minecraft.AttachCapabilitiesEventMixin",
+    "minecraft.EntityMixin",
     "minecraft.LivingEntityMixin"
   ],
   "client": [

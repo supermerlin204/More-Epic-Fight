@@ -10,6 +10,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
+import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.client.render.MEFRenderTypes;
@@ -44,7 +45,7 @@ public class HealthBarMixin {
 
     @Inject(method = "shouldDraw", at = @At("HEAD"), remap = false, cancellable = true)
     public void mef$shouldDraw(LivingEntity entity, LivingEntityPatch<?> entityPatch, LocalPlayerPatch playerPatch, float partialTicks, CallbackInfoReturnable<Boolean> cir) {
-        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null){
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null && MEFEntityAPI.getStaminaTypeByEntity(entity).getBarRenderType() == StaminaType.BarRenderType.SMALL){
             cir.setReturnValue(true);
             cir.cancel();
         }
@@ -55,9 +56,33 @@ public class HealthBarMixin {
         if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null){
             ci.cancel();
 
-
+            float scale = 2F * entity.getBbWidth();
 
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
+
+            //绘制处决图标
+            if (entity == playerPatch.getTarget() && MEFEntityAPI.canExecute(playerPatch) && entity.isAlive()){
+                float rio = mefEntity.getKnockdownTime()/100F;
+
+                if (entityPatch != null && entityPatch.getHitAnimation(StunType.KNOCKDOWN) != null && entityPatch.getAnimator().getPlayerFor(null).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)){
+                    rio = entityPatch.getAnimator().getPlayerFor(null).getElapsedTime()/ entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
+                }
+                rio = Mth.clamp(rio,0F,1F);
+                Matrix4f matrix4f = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
+                        poseStack, entity, 0.0F, entity.getBbHeight()/2, 0.0F, true, partialTicks
+                );
+                int step = (int) (59F*rio);
+
+                float size = 0.2F * scale;
+
+                mef$draw(matrix4f, EXECUTE, buffers,
+                        -size, -size, size, size,
+                        step/60F, 0.0F, (step+1)/60F, 1.0F);
+
+
+            }
+
+            if (mefEntity.getStaminaType().getBarRenderType() != StaminaType.BarRenderType.SMALL)return;
 
             Matrix4f matrix = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
                     poseStack, entity, 0.0F, entity.getBbHeight() + 0.5F, 0.0F, true, partialTicks
@@ -72,7 +97,7 @@ public class HealthBarMixin {
             float stamina = mefEntity.getStamina();
             float staminaRatio = Mth.clamp(stamina / maxStamina, 0.0F, 1.0F);
 
-            float scale = 2F * entity.getBbWidth();
+
 
             float bgWidth = 1.0f * scale;
             float bgHalf = bgWidth * 0.5f;
@@ -107,27 +132,7 @@ public class HealthBarMixin {
                         fgLeft, y1, fgRight, y2,
                         0.0F, 0.0F, staminaRatio, 1.0F);
             }
-            //绘制处决图标
-            if (entity == playerPatch.getTarget() && MEFEntityAPI.canExecute(playerPatch) && entity.isAlive()){
-                float rio = mefEntity.getKnockdownTime()/100F;
 
-                if (entityPatch != null && entityPatch.getHitAnimation(StunType.KNOCKDOWN) != null && entityPatch.getAnimator().getPlayerFor(null).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)){
-                    rio = entityPatch.getAnimator().getPlayerFor(null).getElapsedTime()/ entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
-                }
-                rio = Mth.clamp(rio,0F,1F);
-                Matrix4f matrix4f = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
-                        poseStack, entity, 0.0F, entity.getBbHeight()/2, 0.0F, true, partialTicks
-                );
-                int step = (int) (59F*rio);
-
-                float size = 0.2F * scale;
-
-                mef$draw(matrix4f, EXECUTE, buffers,
-                        -size, -size, size, size,
-                        step/60F, 0.0F, (step+1)/60F, 1.0F);
-
-
-            }
         }
     }
 

@@ -19,6 +19,7 @@ public class LivingEntityPatchMixin {
     protected Entity lastTryHurtEntity;
 
 
+    //TODO 目前只能判断EF实体之间的防御被防御,找个新的插入点?
     @Inject(at = @At(value = "TAIL"), method = "setLastAttackResult")
     protected void mef$setLastAttackResult(AttackResult attackResult, CallbackInfo ci) {
         LivingEntityPatch<?> livingEntityPatch =  (LivingEntityPatch<?>)(Object)this;
