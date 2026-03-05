@@ -7,16 +7,20 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.fml.ModLoader;
 import org.merlin204.mef.api.animation.defense.DefenseTimePair;
 import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreStunType;
+import org.merlin204.mef.api.forgeevent.AttackResultEvent;
+import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.registry.MEFMobEffects;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.StaticAnimation;
@@ -27,57 +31,49 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.damagesource.StunType;
 
-@Mixin(EntityEvents.class)
+@Mixin(value = EntityEvents.class, remap = false)
 public class EntityEventsMixin {
 
-
     /**
-     * 和EF使用同一个订阅,但在其之前先一步处理,主要处理动画防御逻辑
+     * 捕获攻击结果,从而进行防御与被防御的判定
      */
-    @Inject(method = "attackEvent", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void attackEvent(LivingAttackEvent event, CallbackInfo ci) {
-        Entity causingEntity = event.getSource().getEntity();
-        LivingEntity hitEntity = event.getEntity();
-        DamageSource damageSource = event.getSource();
+    @Redirect(
+            method = "attackEvent(Lnet/minecraftforge/event/entity/living/LivingAttackEvent;)V",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lyesman/epicfight/world/capabilities/entitypatch/LivingEntityPatch;tryHurt(Lnet/minecraft/world/damagesource/DamageSource;F)Lyesman/epicfight/api/utils/AttackResult;"
+            )
+    )
+    private static AttackResult redirectTryHurt(LivingEntityPatch<?> entityPatch, DamageSource source, float damage,LivingAttackEvent event) {
+        AttackResult attackResult = entityPatch.tryHurt(source, damage);
+        Entity atk = source.getEntity();
+        LivingEntity hurt = event.getEntity();
+        MEFEntity atkMefEntity = MEFCapabilities.getMEFEntity(atk);
+        MEFEntity hurtMefEntity = MEFCapabilities.getMEFEntity(hurt);
 
-        if (causingEntity != null) {
-            LivingEntityPatch<?> attackerEntityPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
-            if (attackerEntityPatch != null) {
-                StaticAnimation animation = attackerEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
-                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
-                    //TODO 只对倒地的实体造成伤害?
-                }
-            }
+        //抛出修改攻击结果的事件
+        AttackResultEvent attackResultEvent = new AttackResultEvent(attackResult,source,hurt,damage);
+        ModLoader.get().postEvent(attackResultEvent);
+        attackResult = attackResultEvent.getAttackResult();
 
-            LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
-            if (hitEntityPatch != null){
-                StaticAnimation animation = hitEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
-                float time = hitEntityPatch.getAnimator().getPlayerFor(null).getElapsedTime();
-                //处决时不受伤害
-                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
-                    event.setCanceled(true);
-                    ci.cancel();
-                }
-                if (animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
-                    boolean successful = false;
-                    for (DefenseTimePair defenseTimePair:animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
-                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(hitEntityPatch,causingEntity,damageSource)){
-                            defenseTimePair.defenseSuccess(hitEntityPatch,causingEntity,damageSource);
-                            successful = true;
-                        }
-                    }
-                    if (successful){
-                        event.setCanceled(true);
-                        EpicFightCapabilities.getUnparameterizedEntityPatch(event.getSource().getEntity(), LivingEntityPatch.class).ifPresent(patch -> {
-                            patch.setLastAttackResult(AttackResult.blocked(event.getAmount()));
-                        });
-                        ci.cancel();
-                    }
-                }
-
+        if (MEFEntityAPI.getStaminaTypeByEntity(atk) != null && atkMefEntity != null){
+            if (attackResult.resultType == AttackResult.ResultType.BLOCKED){
+                atkMefEntity.getStaminaType().whenBeBlocked(atkMefEntity,damage);
+            }else if (attackResult.resultType == AttackResult.ResultType.MISSED){
+                atkMefEntity.getStaminaType().whenBeDodged(atkMefEntity,damage);
             }
         }
+
+        if (MEFEntityAPI.getStaminaTypeByEntity(hurt) != null && hurtMefEntity != null){
+            if (attackResult.resultType == AttackResult.ResultType.BLOCKED){
+                hurtMefEntity.getStaminaType().whenBlock(atkMefEntity,damage);
+            }else if (attackResult.resultType == AttackResult.ResultType.MISSED){
+                hurtMefEntity.getStaminaType().whenDodge(atkMefEntity,damage);
+            }
+        }
+        return attackResult;
     }
+
 
     /**
      * 和EF使用同一个订阅,但在其之前先一步处理,主要处理动画处决逻辑

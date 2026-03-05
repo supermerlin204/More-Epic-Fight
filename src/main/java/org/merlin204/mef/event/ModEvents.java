@@ -1,5 +1,7 @@
 package org.merlin204.mef.event;
 
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
@@ -8,14 +10,13 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import org.merlin204.mef.api.animation.defense.DefenseTimePair;
+import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreLivingMotions;
 import org.merlin204.mef.api.entity.MoreStunType;
-import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
-import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
+import org.merlin204.mef.api.forgeevent.*;
 
-import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
-import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
 import org.merlin204.mef.api.network.PacketHandler;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.api.stamina.type.DarkSoulStaminaType;
@@ -25,7 +26,10 @@ import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
+import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.model.armature.HumanoidArmature;
+import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
@@ -41,17 +45,68 @@ public class ModEvents {
 
 
     /**
+     * 防御动画的处理
+     */
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void attackResultEvent(AttackResultEvent event) {
+        Entity causingEntity = event.getSource().getEntity();
+        LivingEntity hitEntity = event.getBeAttacked();
+        DamageSource damageSource = event.getSource();
+
+        if (causingEntity != null) {
+            LivingEntityPatch<?> attackerEntityPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
+            if (attackerEntityPatch != null) {
+                StaticAnimation animation = attackerEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
+                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
+                    //TODO 只对倒地的实体造成伤害?
+                }
+            }
+
+            LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
+            if (hitEntityPatch != null){
+                StaticAnimation animation = hitEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
+                float time = hitEntityPatch.getAnimator().getPlayerFor(null).getElapsedTime();
+                //处决时不受伤害
+                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
+                    event.setAttackResult(AttackResult.blocked(event.getDamage()));
+                }
+                if (animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
+                    boolean successful = false;
+                    for (DefenseTimePair defenseTimePair:animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
+                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(hitEntityPatch,causingEntity,damageSource)){
+                            defenseTimePair.defenseSuccess(hitEntityPatch,causingEntity,damageSource);
+                            successful = true;
+                        }
+                    }
+                    if (successful){
+                        event.setAttackResult(AttackResult.blocked(event.getDamage()));
+                        EpicFightCapabilities.getUnparameterizedEntityPatch(event.getSource().getEntity(), LivingEntityPatch.class).ifPresent(patch -> {
+                            patch.setLastAttackResult(AttackResult.blocked(event.getDamage()));
+                        });
+                    }
+                }
+
+            }
+        }
+
+
+
+    }
+
+    /**
      * 添加默认的耐力类型
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void staminaTypeRegistry(StaminaTypeRegistryEvent event) {
+        event.getMap().put(EntityType.IRON_GOLEM,new SekiroStaminaType(50,0F));
+        event.getMap().put(EntityType.POLAR_BEAR,new SekiroStaminaType(20,0F));
 
-        event.getMap().put(EntityType.IRON_GOLEM,new SekiroStaminaType(50,0F).setBarRenderType(StaminaType.BarRenderType.BOSS));
-
-        event.getMap().put(EntityType.POLAR_BEAR,new SekiroStaminaType(20,0F).setBarRenderType(StaminaType.BarRenderType.BOSS));
+        event.getMap().put(EntityType.WOLF,new DarkSoulStaminaType(5,0F));
 
         event.getMap().put(EntityType.HUSK,new DarkSoulStaminaType(5,0F));
         event.getMap().put(EntityType.ZOMBIE,new DarkSoulStaminaType(5,0F));
+        event.getMap().put(EntityType.SHULKER,new DarkSoulStaminaType(5,0F));
+        event.getMap().put(EntityType.WITHER_SKELETON,new DarkSoulStaminaType(5,0F));
     }
 
 
