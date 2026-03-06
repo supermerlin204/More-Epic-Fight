@@ -127,7 +127,7 @@ public class MEFAnimations {
      */
     public static DefenseSuccessEvent<?> PERFECT_PARRY = DefenseSuccessEvent.TimePairEvent.create(0.5F,0.56F,(ownerPatch, attackEntity, damageSource) ->{
         if (ownerPatch instanceof PlayerPatch<?> patch){
-            patch.setStamina(9999999);
+            patch.setStamina(patch.getMaxStamina());
         }
     });
 

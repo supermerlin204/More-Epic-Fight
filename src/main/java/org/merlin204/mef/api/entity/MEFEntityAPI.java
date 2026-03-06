@@ -1,6 +1,5 @@
 package org.merlin204.mef.api.entity;
 
-
 import com.google.common.collect.Maps;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -25,6 +24,7 @@ import yesman.epicfight.world.capabilities.item.CapabilityItem;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
 import yesman.epicfight.world.damagesource.StunType;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 
 /**
@@ -122,8 +122,13 @@ public class MEFEntityAPI {
 
     /**
      * 获取一个实体所绑定的耐力类型
+     * 加 @Nullable 注解和 null 检查，防止处理非实体伤害（如/kill，跌落，虚空）时发生崩溃
      */
-    public static StaminaType getStaminaTypeByEntity(Entity entity){
+    @Nullable
+    public static StaminaType getStaminaTypeByEntity(@Nullable Entity entity){
+        if (entity == null) {
+            return null; // 遇到无来源伤害，安全返回空，让外层自行判定
+        }
         if (EpicFightCapabilities.getEntityPatch(entity,LivingEntityPatch.class) instanceof IMEFPatch imefPatch){
             return imefPatch.getStaminaType();
         }
