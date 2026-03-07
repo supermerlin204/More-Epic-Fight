@@ -24,20 +24,50 @@ public interface IMEFPatch {
         return null;
     }
 
-    default float getStaminaMax(){
-        return getMEFEntity().getStaminaMax();
-    }
-
-    default float getStaminaRegen(){
-        return getMEFEntity().getStaminaRegen();
-    }
-
-    default float getStamina(){
+    default float getStamina() {
         return getMEFEntity().getStamina();
     }
 
-    default void setStamina(float amount){
+    default void setStamina(float amount) {
         getMEFEntity().setStamina(amount);
     }
+
+    default float getStaminaMax() {
+        return getMEFEntity().getStaminaMax();
+    }
+
+    default float getStaminaRegen() {
+        return getMEFEntity().getStaminaRegen();
+    }
+
+
+    default float getAnimationSpeed() {
+        return getMEFEntity().getAnimationSpeed();
+    }
+
+    default void setAnimationSpeed(float speed) {
+        getMEFEntity().setAnimationSpeed(speed);
+    }
+
+    default float getWonderSpeed() {
+        return getMEFEntity().getWonderSpeed();
+    }
+
+    default void setWonderSpeed(float amount) {
+        getMEFEntity().setWonderSpeed(amount);
+    }
+
+    default int getWonderTime() {
+        return getMEFEntity().getWonderTime();
+    }
+
+    default void setWonderTime(int ticks) {
+        getMEFEntity().setWonderTime(ticks);
+    }
+
+    default boolean isWondering() {
+        return getMEFEntity().isWonder();
+    }
+
 
 }

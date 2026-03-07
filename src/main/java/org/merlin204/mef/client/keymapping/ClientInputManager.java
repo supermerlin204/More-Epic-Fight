@@ -26,11 +26,15 @@ public class ClientInputManager {
 
 
             while (MEFKeyMappings.PARRY.consumeClick()) {
-                MEFEntityAPI.tryPlayParryAnimation(patch);
+                if (MEFEntityAPI.canParried(patch)){
+                    MEFEntityAPI.tryPlayParryAnimation(patch);
+                }
             }
 
             while (MEFKeyMappings.EXECUTE.consumeClick()) {
-                MEFEntityAPI.tryPlayExecuteAnimation(patch);
+                if (MEFEntityAPI.canExecute(patch)){
+                    MEFEntityAPI.tryPlayExecuteAnimation(patch);
+                }
             }
 
         }

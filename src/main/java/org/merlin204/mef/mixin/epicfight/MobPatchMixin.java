@@ -50,9 +50,9 @@ public class MobPatchMixin {
                     MEFEntity mefEntity = MEFCapabilities.getMEFEntity(mobPatch.getOriginal());
                     if (mefEntity.isWonder()){
                         if (mefEntity.getWonderSpeed() > 0){
-                            mobPatch.currentLivingMotion = MoreLivingMotions.WONDER_L;
-                        }else {
                             mobPatch.currentLivingMotion = MoreLivingMotions.WONDER_R;
+                        }else {
+                            mobPatch.currentLivingMotion = MoreLivingMotions.WONDER_L;
                         }
                     }
                 }
@@ -87,9 +87,9 @@ public class MobPatchMixin {
                         MEFEntity mefEntity = MEFCapabilities.getMEFEntity(mobPatch.getOriginal());
                         if (mefEntity.isWonder()){
                             if (mefEntity.getWonderSpeed() > 0){
-                                mobPatch.currentLivingMotion = MoreLivingMotions.WONDER_L;
-                            }else {
                                 mobPatch.currentLivingMotion = MoreLivingMotions.WONDER_R;
+                            }else {
+                                mobPatch.currentLivingMotion = MoreLivingMotions.WONDER_L;
                             }
                         }
                     }

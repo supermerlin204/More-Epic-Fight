@@ -1,5 +1,6 @@
 package org.merlin204.mef.api.animation.type;
 
+import org.merlin204.mef.epicfight.IMEFPatch;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.MovementAnimation;
@@ -35,6 +36,9 @@ public class ModifierMovementAnimation extends MovementAnimation {
             float movementSpeed = 1.0F;
             if (Math.abs((entitypatch.getOriginal()).walkAnimation.speed() - (entitypatch.getOriginal()).walkAnimation.speed(1.0F)) < 0.007F) {
                 movementSpeed *= (entitypatch.getOriginal()).walkAnimation.speed() * this.speed;
+            }
+            if (entitypatch instanceof IMEFPatch imefPatch && imefPatch.isWondering()){
+                movementSpeed *= imefPatch.getWonderSpeed();
             }
 
             return movementSpeed;

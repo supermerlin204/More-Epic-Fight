@@ -62,7 +62,6 @@ public class PatchEntityWonderGoal extends Goal {
     }
 
     public void tick() {
-        if (entityPatch.getEntityState().inaction()) return;
 
         LivingEntity target = entityPatch.getTarget();
         LivingEntity entity = entityPatch.getOriginal();

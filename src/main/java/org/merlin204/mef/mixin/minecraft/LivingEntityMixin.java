@@ -28,9 +28,7 @@ public class LivingEntityMixin {
 
     @Inject(at = @At(value = "TAIL"), method = "defineSynchedData()V")
     protected void mef$defineSynchedData(CallbackInfo info) {
-        if(MEFEntityAPI.getStaminaTypeByEntity(((LivingEntity)(Object)this)) != null){
-            MEFEntity.createSyncedEntityData((LivingEntity)(Object)this);
-        }
+        MEFEntity.createSyncedEntityData((LivingEntity)(Object)this);
     }
 
     @Inject(at = @At(value = "TAIL"), method = "<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V")
