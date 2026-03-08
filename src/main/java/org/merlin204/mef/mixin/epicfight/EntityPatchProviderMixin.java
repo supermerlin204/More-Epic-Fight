@@ -1,6 +1,5 @@
 package org.merlin204.mef.mixin.epicfight;
 
-
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,11 +17,11 @@ public class EntityPatchProviderMixin {
     @Inject(method = "registerEntityPatches", at = @At("TAIL"),  remap = false)
     private static void registerEntityPatches(CallbackInfo ci) {
         MEFEntityAPI.init();
-
     }
 
-    @Inject(method = "registerEntityPatchesClient", at = @At("TAIL"),  remap = false)
+    @Inject(method = "registerEntityPatchesClient", at = @At("TAIL"), remap = false)
     private static void registerEntityPatchesClient(CallbackInfo ci) {
         MEFEntityAPI.init();
+        MEFEntityAPI.clientInit();
     }
 }

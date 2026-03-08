@@ -7,12 +7,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoader;
-import org.merlin204.mef.api.forgeevent.ExecuteAnimationRegistryEvent;
-import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
-import org.merlin204.mef.api.forgeevent.ParryAnimationRegistryEvent;
-import org.merlin204.mef.api.forgeevent.StaminaTypeRegistryEvent;
+import org.merlin204.mef.api.forgeevent.*;
 import org.merlin204.mef.api.stamina.StaminaType;
+import org.merlin204.mef.client.gui.BossBarRenderer;
+import org.merlin204.mef.client.gui.MEFBossBarManager;
 import org.merlin204.mef.epicfight.IMEFPatch;
 import org.merlin204.mef.registry.MEFMobEffects;
 import yesman.epicfight.api.animation.AnimationManager;
@@ -26,6 +28,7 @@ import yesman.epicfight.world.damagesource.StunType;
 
 import javax.annotation.Nullable;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * MEF与实体有关的逻辑集
@@ -86,31 +89,64 @@ public class MEFEntityAPI {
 
     }
 
+    @OnlyIn(Dist.CLIENT)
+    public static void clientInit() {
+        Map<EntityType<?>, BossBarRenderer> bossBarRegistry = Maps.newHashMap();
+        BossBarRegistryEvent bossBarRegistryEvent = new BossBarRegistryEvent(bossBarRegistry);
+        ModLoader.get().postEvent(bossBarRegistryEvent);
+
+        MEFBossBarManager.RENDERER_REGISTRY.putAll(bossBarRegistry);
+    }
+
     /**
      * 检查玩家是否能发动弹反
      */
     public static boolean canParried(PlayerPatch<?> playerPatch){
-        //TODO 抛个事件
-        return playerPatch.getEntityState().canUseSkill();
+        boolean baseResult = playerPatch.getEntityState().canUseSkill();
+
+        PlayerCanParryEvent event = new PlayerCanParryEvent(playerPatch, baseResult);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        return event.canParry();
     }
 
     /**
      * 检查玩家是否能发动处决
      */
     public static boolean canExecute(PlayerPatch<?> playerPatch){
-        //TODO 抛个事件
-        if (playerPatch.getTarget() == null)return false;
-        if (!playerPatch.getEntityState().canUseSkill())return false;
+        boolean baseResult = false;
         LivingEntity target = playerPatch.getTarget();
-        if (target.distanceTo(playerPatch.getOriginal()) > target.getBbWidth() + 2)return false;
-        if (target.hasEffect(MEFMobEffects.KNOCKDOWN.get())){
-            return true;
+
+        if (target != null && playerPatch.getEntityState().canUseSkill()) {
+            if (target.distanceTo(playerPatch.getOriginal()) <= target.getBbWidth() + 2) {
+                baseResult = canBeExecute(target);
+            }
         }
-        LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(target, LivingEntityPatch.class);
-        if (patch != null && patch.getHitAnimation(StunType.KNOCKDOWN) != null){
-            return patch.getAnimator().getPlayerFor(null).getRealAnimation().get() == patch.getHitAnimation(StunType.KNOCKDOWN).get();
+
+        PlayerCanExecuteEvent event = new PlayerCanExecuteEvent(playerPatch, target, baseResult);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        return event.canExecute();
+    }
+
+    /**
+     * 检查当前实体是否能被处决
+     */
+    public static boolean canBeExecute(LivingEntity livingEntity){
+        boolean baseResult = false;
+        if (livingEntity != null) {
+            LivingEntityPatch<?> targetPatch = EpicFightCapabilities.getEntityPatch(livingEntity, LivingEntityPatch.class);
+            if (targetPatch != null && targetPatch.getHitAnimation(StunType.KNOCKDOWN) != null) {
+                baseResult = Objects.requireNonNull(targetPatch.getAnimator().getPlayerFor(null)).getRealAnimation().get() == targetPatch.getHitAnimation(StunType.KNOCKDOWN).get();
+            } else {
+                baseResult = livingEntity.hasEffect(MEFMobEffects.KNOCKDOWN.get());
+            }
         }
-        return false;
+
+        EntityCanBeExecutedEvent event = new EntityCanBeExecutedEvent(livingEntity, baseResult);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        return event.canBeExecuted();
     }
 
     /**
