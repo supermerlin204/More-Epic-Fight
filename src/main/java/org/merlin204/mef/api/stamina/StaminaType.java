@@ -61,14 +61,14 @@ public abstract class StaminaType {
     /**
      * 格挡攻击的时候
      */
-    public void whenBlock(MEFEntity mefEntity, float damage){
+    public void whenBlock(MEFEntity mefEntity, float damage, DamageSource source){
 
     }
 
     /**
      * 闪避攻击的时候
      */
-    public void whenDodge(MEFEntity mefEntity, float damage){
+    public void whenDodge(MEFEntity mefEntity, float damage, DamageSource source){
 
     }
 
@@ -82,14 +82,14 @@ public abstract class StaminaType {
     /**
      * 攻击被格挡的时候
      */
-    public void whenBeBlocked(MEFEntity mefEntity, float damage){
+    public void whenBeBlocked(MEFEntity mefEntity, float damage, DamageSource source){
 
     }
 
     /**
      * 攻击被闪避的时候
      */
-    public void whenBeDodged(MEFEntity mefEntity, float damage){
+    public void whenBeDodged(MEFEntity mefEntity, float damage, DamageSource source){
 
     }
 

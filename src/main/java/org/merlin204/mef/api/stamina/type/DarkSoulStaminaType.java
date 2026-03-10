@@ -26,7 +26,7 @@ public class DarkSoulStaminaType extends StaminaType {
             if (epicFightDamageSource.getAnimation().get().getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && epicFightDamageSource.getAnimation().get().getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
                 return;
             }
-            mefEntity.setStamina(mefEntity.getStamina() - epicFightDamageSource.getBaseImpact());
+            mefEntity.setStamina(mefEntity.getStamina() - epicFightDamageSource.calculateImpact());
         }
         mefEntity.setStamina(mefEntity.getStamina() - amount*0.3F);
     }
@@ -39,7 +39,7 @@ public class DarkSoulStaminaType extends StaminaType {
     @Override
     public void whenKnockDownEnd(MEFEntity mefEntity) {
         super.whenKnockDownEnd(mefEntity);
-        mefEntity.setStamina(999999999);
+        mefEntity.setStamina(mefEntity.getStaminaMax());
     }
 
     @Override

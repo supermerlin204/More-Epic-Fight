@@ -39,18 +39,18 @@ public class KaZanWhiteStaminaType extends StaminaType {
     @Override
     public void whenKnockDownEnd(MEFEntity mefEntity) {
         super.whenKnockDownEnd(mefEntity);
-        mefEntity.setStamina(999999999);
+        mefEntity.setStamina(mefEntity.getStaminaMax());
     }
 
     @Override
-    public void whenBlock(MEFEntity mefEntity, float damage) {
-        super.whenBlock(mefEntity, damage);
+    public void whenBlock(MEFEntity mefEntity, float damage, DamageSource source) {
+        super.whenBlock(mefEntity, damage, source);
         mefEntity.setStamina(mefEntity.getStamina() - damage*0.5F);
     }
 
     @Override
-    public void whenBeBlocked(MEFEntity mefEntity, float damage) {
-        super.whenBeBlocked(mefEntity, damage);
+    public void whenBeBlocked(MEFEntity mefEntity, float damage, DamageSource damageSource) {
+        super.whenBeBlocked(mefEntity, damage, damageSource);
         mefEntity.setStamina(mefEntity.getStamina() - damage*0.5F);
     }
 

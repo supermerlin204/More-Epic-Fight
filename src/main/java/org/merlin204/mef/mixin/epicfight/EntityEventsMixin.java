@@ -58,17 +58,17 @@ public class EntityEventsMixin {
 
         if (MEFEntityAPI.getStaminaTypeByEntity(atk) != null && atkMefEntity != null){
             if (attackResult.resultType == AttackResult.ResultType.BLOCKED){
-                atkMefEntity.getStaminaType().whenBeBlocked(atkMefEntity,damage);
+                atkMefEntity.getStaminaType().whenBeBlocked(atkMefEntity,damage, source);
             }else if (attackResult.resultType == AttackResult.ResultType.MISSED){
-                atkMefEntity.getStaminaType().whenBeDodged(atkMefEntity,damage);
+                atkMefEntity.getStaminaType().whenBeDodged(atkMefEntity,damage, source);
             }
         }
 
         if (MEFEntityAPI.getStaminaTypeByEntity(hurt) != null && hurtMefEntity != null){
             if (attackResult.resultType == AttackResult.ResultType.BLOCKED){
-                hurtMefEntity.getStaminaType().whenBlock(atkMefEntity,damage);
+                hurtMefEntity.getStaminaType().whenBlock(atkMefEntity,damage, source);
             }else if (attackResult.resultType == AttackResult.ResultType.MISSED){
-                hurtMefEntity.getStaminaType().whenDodge(atkMefEntity,damage);
+                hurtMefEntity.getStaminaType().whenDodge(atkMefEntity,damage, source);
             }
         }
         return attackResult;

@@ -1,11 +1,9 @@
 package org.merlin204.mef.api.stamina.type;
 
 import net.minecraft.world.damagesource.DamageSource;
-import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.capability.MEFEntity;
-import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 
 public class SekiroStaminaType extends StaminaType {
     public SekiroStaminaType(float defaultMax, float defaultRegen) {
@@ -20,12 +18,6 @@ public class SekiroStaminaType extends StaminaType {
         return mefEntity.getOriginal().getMaxHealth() * 0.4F;
     }
 
-
-    @Override
-    public boolean canRecover(MEFEntity mefEntity) {
-        return false;
-    }
-
     @Override
     public void whenKnockDownEnd(MEFEntity mefEntity) {
         super.whenKnockDownEnd(mefEntity);
@@ -33,14 +25,14 @@ public class SekiroStaminaType extends StaminaType {
     }
 
     @Override
-    public void whenBlock(MEFEntity mefEntity, float damage) {
-        super.whenBlock(mefEntity, damage);
-        mefEntity.setStamina(mefEntity.getStamina() - 10);
+    public void whenBlock(MEFEntity mefEntity, float damage, DamageSource source) {
+        super.whenBlock(mefEntity, damage, source);
+        mefEntity.setStamina(mefEntity.getStamina());
     }
 
     @Override
-    public void whenBeBlocked(MEFEntity mefEntity, float damage) {
-        super.whenBeBlocked(mefEntity, damage);
+    public void whenBeBlocked(MEFEntity mefEntity, float damage, DamageSource damageSource) {
+        super.whenBeBlocked(mefEntity, damage, damageSource);
         mefEntity.setStamina(mefEntity.getStamina() - 5);
     }
 
