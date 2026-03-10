@@ -1,5 +1,6 @@
 package org.merlin204.mef.skill;
 
+
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,6 +26,8 @@ public class ExclusiveSkillHandler {
 
     private static final Map<UUID, Skill> originalDodges = new HashMap<>();
     private static final Map<UUID, Skill> originalGuards = new HashMap<>();
+    private static final Map<UUID, Skill> originalIdentitys = new HashMap<>();
+    private static final Map<UUID, Skill> originalMovers = new HashMap<>();
 
     @SubscribeEvent
     public static void onWeaponSkillChange(InnateSkillChangeEvent event) {
@@ -42,6 +45,12 @@ public class ExclusiveSkillHandler {
 
         Skill exclusiveGuard = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveGuard(serverPlayerPatch, newItem) : null;
         handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.GUARD, originalGuards, exclusiveGuard);
+
+        Skill exclusiveIdentity = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveIdentity(serverPlayerPatch, newItem) : null;
+        handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.IDENTITY, originalIdentitys, exclusiveIdentity);
+
+        Skill exclusiveMover = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveMover(serverPlayerPatch, newItem) : null;
+        handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.MOVER, originalMovers, exclusiveMover);
     }
 
     private static void handleExclusiveSkill(ServerPlayerPatch serverPlayerPatch, UUID playerId,

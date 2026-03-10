@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * 允许武器自带专属的闪避(DODGE)和防御(GUARD)技能。
+ * 允许武器自带专属的闪避(DODGE),防御(GUARD),行动(MOVER),属性(IDENTITY)技能。
  * 支持按 Style 独立配置，也支持全 Style 通用的快速配置。
  * 请使用newAdvanceStyleCombo来代替原有的newStyleCombo
  */
@@ -34,9 +34,13 @@ public class AdvanceWeaponCapability extends WeaponCapability {
 
     protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveDodges;
     protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveGuards;
+    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveIdentitys;
+    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveMovers;
 
     protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveDodge;
     protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveGuard;
+    protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveIdentity;
+    protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveMover;
 
     protected AdvanceWeaponCapability(CapabilityItem.Builder builder) {
         super(builder);
@@ -44,9 +48,13 @@ public class AdvanceWeaponCapability extends WeaponCapability {
 
         this.exclusiveDodges = advanceBuilder.exclusiveDodges;
         this.exclusiveGuards = advanceBuilder.exclusiveGuards;
+        this.exclusiveIdentitys = advanceBuilder.exclusiveIdentitys;
+        this.exclusiveMovers = advanceBuilder.exclusiveMovers;
 
         this.defaultExclusiveDodge = advanceBuilder.defaultExclusiveDodge;
         this.defaultExclusiveGuard = advanceBuilder.defaultExclusiveGuard;
+        this.defaultExclusiveIdentity = advanceBuilder.defaultExclusiveIdentity;
+        this.defaultExclusiveMover = advanceBuilder.defaultExclusiveMover;
     }
 
     public Skill getExclusiveDodge(PlayerPatch<?> playerpatch, ItemStack itemstack) {
@@ -65,6 +73,22 @@ public class AdvanceWeaponCapability extends WeaponCapability {
         return this.defaultExclusiveGuard != null ? this.defaultExclusiveGuard.apply(this, playerpatch) : null;
     }
 
+    public Skill getExclusiveIdentity(PlayerPatch<?> playerpatch, ItemStack itemstack) {
+        Style style = this.getStyle(playerpatch);
+        if (this.exclusiveIdentitys.containsKey(style)) {
+            return this.exclusiveIdentitys.get(style).apply(this, playerpatch);
+        }
+        return this.defaultExclusiveIdentity != null ? this.defaultExclusiveIdentity.apply(this, playerpatch) : null;
+    }
+
+    public Skill getExclusiveMover(PlayerPatch<?> playerpatch, ItemStack itemstack) {
+        Style style = this.getStyle(playerpatch);
+        if (this.exclusiveMovers.containsKey(style)) {
+            return this.exclusiveMovers.get(style).apply(this, playerpatch);
+        }
+        return this.defaultExclusiveMover != null ? this.defaultExclusiveMover.apply(this, playerpatch) : null;
+    }
+
     public static AdvanceBuilder builder() {
         return new AdvanceBuilder();
     }
@@ -72,15 +96,21 @@ public class AdvanceWeaponCapability extends WeaponCapability {
     public static class AdvanceBuilder extends WeaponCapability.Builder {
         protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveDodges;
         protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveGuards;
+        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveIdentitys;
+        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveMovers;
 
         protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveDodge = null;
         protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveGuard = null;
+        protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveIdentity = null;
+        protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveMover = null;
 
         protected AdvanceBuilder() {
             super();
             this.constructor(AdvanceWeaponCapability::new);
             this.exclusiveDodges = Maps.newHashMap();
             this.exclusiveGuards = Maps.newHashMap();
+            this.exclusiveIdentitys = Maps.newHashMap();
+            this.exclusiveMovers = Maps.newHashMap();
         }
 
         public AdvanceBuilder exclusiveDodge(Style style, Skill skill) {
@@ -100,6 +130,26 @@ public class AdvanceWeaponCapability extends WeaponCapability {
 
         public AdvanceBuilder exclusiveGuard(Skill skill) {
             this.defaultExclusiveGuard = (cap, patch) -> skill;
+            return this;
+        }
+
+        public AdvanceBuilder exclusiveIdentity(Style style, Skill skill) {
+            this.exclusiveIdentitys.put(style, (cap, patch) -> skill);
+            return this;
+        }
+
+        public AdvanceBuilder exclusiveIdentity(Skill skill) {
+            this.defaultExclusiveIdentity = (cap, patch) -> skill;
+            return this;
+        }
+
+        public AdvanceBuilder exclusiveMover(Style style, Skill skill) {
+            this.exclusiveMovers.put(style, (cap, patch) -> skill);
+            return this;
+        }
+
+        public AdvanceBuilder exclusiveMover(Skill skill) {
+            this.defaultExclusiveMover = (cap, patch) -> skill;
             return this;
         }
 
