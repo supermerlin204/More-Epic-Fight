@@ -1,12 +1,14 @@
 package org.merlin204.mef.skill;
 
-
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.merlin204.mef.capability.AdvanceWeaponCapability;
+import org.merlin204.mef.capability.OriginalSkillCapability;
 import org.merlin204.mef.main.MoreEpicFightMod;
+import yesman.epicfight.api.data.reloader.SkillManager;
 import yesman.epicfight.api.forgeevent.InnateSkillChangeEvent;
 import yesman.epicfight.network.EpicFightNetworkManager;
 import yesman.epicfight.network.server.SPChangeSkill;
@@ -17,17 +19,8 @@ import yesman.epicfight.skill.SkillSlots;
 import yesman.epicfight.world.capabilities.entitypatch.player.ServerPlayerPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID)
 public class ExclusiveSkillHandler {
-
-    private static final Map<UUID, Skill> originalDodges = new HashMap<>();
-    private static final Map<UUID, Skill> originalGuards = new HashMap<>();
-    private static final Map<UUID, Skill> originalIdentitys = new HashMap<>();
-    private static final Map<UUID, Skill> originalMovers = new HashMap<>();
 
     @SubscribeEvent
     public static void onWeaponSkillChange(InnateSkillChangeEvent event) {
@@ -38,54 +31,74 @@ public class ExclusiveSkillHandler {
 
         CapabilityItem toCap = event.getToItemCapability();
         ItemStack newItem = event.getTo();
-        UUID playerId = serverPlayerPatch.getOriginal().getUUID();
 
-        Skill exclusiveDodge = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveDodge(serverPlayerPatch, newItem) : null;
-        handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.DODGE, originalDodges, exclusiveDodge);
+        AdvanceWeaponCapability.ExclusiveSkillData exclusiveDodge = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveDodge(serverPlayerPatch, newItem) : null;
+        handleExclusiveSkill(serverPlayerPatch, SkillSlots.DODGE, exclusiveDodge);
 
-        Skill exclusiveGuard = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveGuard(serverPlayerPatch, newItem) : null;
-        handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.GUARD, originalGuards, exclusiveGuard);
+        AdvanceWeaponCapability.ExclusiveSkillData exclusiveGuard = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveGuard(serverPlayerPatch, newItem) : null;
+        handleExclusiveSkill(serverPlayerPatch, SkillSlots.GUARD, exclusiveGuard);
 
-        Skill exclusiveIdentity = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveIdentity(serverPlayerPatch, newItem) : null;
-        handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.IDENTITY, originalIdentitys, exclusiveIdentity);
+        AdvanceWeaponCapability.ExclusiveSkillData exclusiveIdentity = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveIdentity(serverPlayerPatch, newItem) : null;
+        handleExclusiveSkill(serverPlayerPatch, SkillSlots.IDENTITY, exclusiveIdentity);
 
-        Skill exclusiveMover = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveMover(serverPlayerPatch, newItem) : null;
-        handleExclusiveSkill(serverPlayerPatch, playerId, SkillSlots.MOVER, originalMovers, exclusiveMover);
+        AdvanceWeaponCapability.ExclusiveSkillData exclusiveMover = (toCap instanceof AdvanceWeaponCapability advCap) ? advCap.getExclusiveMover(serverPlayerPatch, newItem) : null;
+        handleExclusiveSkill(serverPlayerPatch, SkillSlots.MOVER, exclusiveMover);
     }
 
-    private static void handleExclusiveSkill(ServerPlayerPatch serverPlayerPatch, UUID playerId,
-                                             SkillSlot slot, Map<UUID, Skill> memoryMap, Skill exclusiveSkill) {
+    private static void handleExclusiveSkill(ServerPlayerPatch serverPlayerPatch, SkillSlot slot, AdvanceWeaponCapability.ExclusiveSkillData exclusiveSkillData) {
+        ServerPlayer player = serverPlayerPatch.getOriginal();
         SkillContainer container = serverPlayerPatch.getSkill(slot);
         Skill currentSkill = container.getSkill();
-        int entityId = serverPlayerPatch.getOriginal().getId();
+        int entityId = player.getId();
+        String slotName = slot.toString();
 
-        if (exclusiveSkill != null) {
-            if (currentSkill != exclusiveSkill) {
-                if (!memoryMap.containsKey(playerId)) {
-                    memoryMap.put(playerId, currentSkill);
-                }
+        player.getCapability(OriginalSkillCapability.INSTANCE).ifPresent(cap -> {
 
-                container.setSkill(exclusiveSkill);
+            if (exclusiveSkillData != null && exclusiveSkillData.skill() != null) {
+                Skill targetSkill = exclusiveSkillData.skill();
+                boolean forceReplace = exclusiveSkillData.isFocusReplace();
 
-                EpicFightNetworkManager.sendToPlayer(new SPChangeSkill(slot, entityId, exclusiveSkill), serverPlayerPatch.getOriginal()
-                );
-            }
-        } else {
-            if (memoryMap.containsKey(playerId)) {
-                Skill originalSkill = memoryMap.get(playerId);
+                if (currentSkill != targetSkill) {
+                    boolean isSlotEmpty = (currentSkill == null);
 
-                if (currentSkill != originalSkill) {
-                    container.setSkill(originalSkill);
+                    if (forceReplace || isSlotEmpty) {
+                        if (!cap.hasSkill(slotName)) {
+                            cap.saveSkill(slotName, currentSkill == null ? null : currentSkill.toString());
+                        }
 
-                    EpicFightNetworkManager.sendToPlayer(new SPChangeSkill(slot, entityId, originalSkill), serverPlayerPatch.getOriginal()
-                    );
+                        container.setSkill(targetSkill);
+                        container.setDisabled(false);
 
-                    if (originalSkill == null) {
-                        container.setDisabled(true);
+                        EpicFightNetworkManager.sendToPlayer(
+                                new SPChangeSkill(slot, entityId, targetSkill), player
+                        );
                     }
                 }
-                memoryMap.remove(playerId);
             }
-        }
+            else {
+                if (cap.hasSkill(slotName)) {
+                    String savedSkillId = cap.getSkill(slotName);
+                    Skill originalSkill = null;
+
+                    if (savedSkillId != null && !"none".equals(savedSkillId)) {
+                        originalSkill = SkillManager.getSkill(savedSkillId);
+                    }
+
+                    if (currentSkill != originalSkill) {
+                        container.setSkill(originalSkill);
+
+                        EpicFightNetworkManager.sendToPlayer(
+                                new SPChangeSkill(slot, entityId, originalSkill), player
+                        );
+
+                        if (originalSkill == null) {
+                            container.setDisabled(true);
+                        }
+                    }
+
+                    cap.removeSkill(slotName);
+                }
+            }
+        });
     }
 }

@@ -32,15 +32,17 @@ import java.util.function.Function;
  */
 public class AdvanceWeaponCapability extends WeaponCapability {
 
-    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveDodges;
-    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveGuards;
-    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveIdentitys;
-    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveMovers;
+    public record ExclusiveSkillData(Skill skill, boolean isFocusReplace) {}
 
-    protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveDodge;
-    protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveGuard;
-    protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveIdentity;
-    protected final BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveMover;
+    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveDodges;
+    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveGuards;
+    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveIdentitys;
+    protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveMovers;
+
+    protected final BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveDodge;
+    protected final BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveGuard;
+    protected final BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveIdentity;
+    protected final BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveMover;
 
     protected AdvanceWeaponCapability(CapabilityItem.Builder builder) {
         super(builder);
@@ -57,7 +59,7 @@ public class AdvanceWeaponCapability extends WeaponCapability {
         this.defaultExclusiveMover = advanceBuilder.defaultExclusiveMover;
     }
 
-    public Skill getExclusiveDodge(PlayerPatch<?> playerpatch, ItemStack itemstack) {
+    public ExclusiveSkillData getExclusiveDodge(PlayerPatch<?> playerpatch, ItemStack itemstack) {
         Style style = this.getStyle(playerpatch);
         if (this.exclusiveDodges.containsKey(style)) {
             return this.exclusiveDodges.get(style).apply(this, playerpatch);
@@ -65,7 +67,7 @@ public class AdvanceWeaponCapability extends WeaponCapability {
         return this.defaultExclusiveDodge != null ? this.defaultExclusiveDodge.apply(this, playerpatch) : null;
     }
 
-    public Skill getExclusiveGuard(PlayerPatch<?> playerpatch, ItemStack itemstack) {
+    public ExclusiveSkillData getExclusiveGuard(PlayerPatch<?> playerpatch, ItemStack itemstack) {
         Style style = this.getStyle(playerpatch);
         if (this.exclusiveGuards.containsKey(style)) {
             return this.exclusiveGuards.get(style).apply(this, playerpatch);
@@ -73,7 +75,7 @@ public class AdvanceWeaponCapability extends WeaponCapability {
         return this.defaultExclusiveGuard != null ? this.defaultExclusiveGuard.apply(this, playerpatch) : null;
     }
 
-    public Skill getExclusiveIdentity(PlayerPatch<?> playerpatch, ItemStack itemstack) {
+    public ExclusiveSkillData getExclusiveIdentity(PlayerPatch<?> playerpatch, ItemStack itemstack) {
         Style style = this.getStyle(playerpatch);
         if (this.exclusiveIdentitys.containsKey(style)) {
             return this.exclusiveIdentitys.get(style).apply(this, playerpatch);
@@ -81,7 +83,7 @@ public class AdvanceWeaponCapability extends WeaponCapability {
         return this.defaultExclusiveIdentity != null ? this.defaultExclusiveIdentity.apply(this, playerpatch) : null;
     }
 
-    public Skill getExclusiveMover(PlayerPatch<?> playerpatch, ItemStack itemstack) {
+    public ExclusiveSkillData getExclusiveMover(PlayerPatch<?> playerpatch, ItemStack itemstack) {
         Style style = this.getStyle(playerpatch);
         if (this.exclusiveMovers.containsKey(style)) {
             return this.exclusiveMovers.get(style).apply(this, playerpatch);
@@ -94,15 +96,15 @@ public class AdvanceWeaponCapability extends WeaponCapability {
     }
 
     public static class AdvanceBuilder extends WeaponCapability.Builder {
-        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveDodges;
-        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveGuards;
-        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveIdentitys;
-        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, Skill>> exclusiveMovers;
+        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveDodges;
+        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveGuards;
+        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveIdentitys;
+        protected final Map<Style, BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData>> exclusiveMovers;
 
-        protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveDodge = null;
-        protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveGuard = null;
-        protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveIdentity = null;
-        protected BiFunction<CapabilityItem, PlayerPatch<?>, Skill> defaultExclusiveMover = null;
+        protected BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveDodge = null;
+        protected BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveGuard = null;
+        protected BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveIdentity = null;
+        protected BiFunction<CapabilityItem, PlayerPatch<?>, ExclusiveSkillData> defaultExclusiveMover = null;
 
         protected AdvanceBuilder() {
             super();
@@ -113,46 +115,71 @@ public class AdvanceWeaponCapability extends WeaponCapability {
             this.exclusiveMovers = Maps.newHashMap();
         }
 
+        // ========================== DODGE ==========================
+        public AdvanceBuilder exclusiveDodge(Style style, Skill skill, boolean isFocusReplace) {
+            this.exclusiveDodges.put(style, (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace));
+            return this;
+        }
         public AdvanceBuilder exclusiveDodge(Style style, Skill skill) {
-            this.exclusiveDodges.put(style, (cap, patch) -> skill);
+            return exclusiveDodge(style, skill, true);
+        }
+        public AdvanceBuilder exclusiveDodge(Skill skill, boolean isFocusReplace) {
+            this.defaultExclusiveDodge = (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace);
             return this;
         }
-
-        public AdvanceBuilder exclusiveGuard(Style style, Skill skill) {
-            this.exclusiveGuards.put(style, (cap, patch) -> skill);
-            return this;
-        }
-
         public AdvanceBuilder exclusiveDodge(Skill skill) {
-            this.defaultExclusiveDodge = (cap, patch) -> skill;
-            return this;
+            return exclusiveDodge(skill, true);
         }
 
+        // ========================== GUARD ==========================
+        public AdvanceBuilder exclusiveGuard(Style style, Skill skill, boolean isFocusReplace) {
+            this.exclusiveGuards.put(style, (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace));
+            return this;
+        }
+        public AdvanceBuilder exclusiveGuard(Style style, Skill skill) {
+            return exclusiveGuard(style, skill, true);
+        }
+        public AdvanceBuilder exclusiveGuard(Skill skill, boolean isFocusReplace) {
+            this.defaultExclusiveGuard = (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace);
+            return this;
+        }
         public AdvanceBuilder exclusiveGuard(Skill skill) {
-            this.defaultExclusiveGuard = (cap, patch) -> skill;
-            return this;
+            return exclusiveGuard(skill, true);
         }
 
+        // ========================== IDENTITY ==========================
+        public AdvanceBuilder exclusiveIdentity(Style style, Skill skill, boolean isFocusReplace) {
+            this.exclusiveIdentitys.put(style, (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace));
+            return this;
+        }
         public AdvanceBuilder exclusiveIdentity(Style style, Skill skill) {
-            this.exclusiveIdentitys.put(style, (cap, patch) -> skill);
+            return exclusiveIdentity(style, skill, true);
+        }
+        public AdvanceBuilder exclusiveIdentity(Skill skill, boolean isFocusReplace) {
+            this.defaultExclusiveIdentity = (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace);
             return this;
         }
-
         public AdvanceBuilder exclusiveIdentity(Skill skill) {
-            this.defaultExclusiveIdentity = (cap, patch) -> skill;
-            return this;
+            return exclusiveIdentity(skill, true);
         }
 
+        // ========================== MOVER ==========================
+        public AdvanceBuilder exclusiveMover(Style style, Skill skill, boolean isFocusReplace) {
+            this.exclusiveMovers.put(style, (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace));
+            return this;
+        }
         public AdvanceBuilder exclusiveMover(Style style, Skill skill) {
-            this.exclusiveMovers.put(style, (cap, patch) -> skill);
+            return exclusiveMover(style, skill, true);
+        }
+        public AdvanceBuilder exclusiveMover(Skill skill, boolean isFocusReplace) {
+            this.defaultExclusiveMover = (cap, patch) -> new ExclusiveSkillData(skill, isFocusReplace);
             return this;
         }
-
         public AdvanceBuilder exclusiveMover(Skill skill) {
-            this.defaultExclusiveMover = (cap, patch) -> skill;
-            return this;
+            return exclusiveMover(skill, true);
         }
 
+        // ========================== OVERRIDES ==========================
         @SafeVarargs
         public final AdvanceBuilder newAdvanceStyleCombo(Style style, AnimationAccessor<? extends AttackAnimation>... animation) {
             super.newStyleCombo(style, animation);
@@ -160,100 +187,37 @@ public class AdvanceWeaponCapability extends WeaponCapability {
         }
 
         @Override
-        public AdvanceBuilder category(WeaponCategory category) {
-            super.category(category);
-            return this;
-        }
-
+        public AdvanceBuilder category(WeaponCategory category) { super.category(category); return this; }
         @Override
-        public AdvanceBuilder styleProvider(Function<LivingEntityPatch<?>, Style> styleProvider) {
-            super.styleProvider(styleProvider);
-            return this;
-        }
-
+        public AdvanceBuilder styleProvider(Function<LivingEntityPatch<?>, Style> styleProvider) { super.styleProvider(styleProvider); return this; }
         @Override
-        public AdvanceBuilder passiveSkill(Skill passiveSkill) {
-            super.passiveSkill(passiveSkill);
-            return this;
-        }
-
+        public AdvanceBuilder passiveSkill(Skill passiveSkill) { super.passiveSkill(passiveSkill); return this; }
         @Override
-        public AdvanceBuilder swingSound(SoundEvent swingSound) {
-            super.swingSound(swingSound);
-            return this;
-        }
-
+        public AdvanceBuilder swingSound(SoundEvent swingSound) { super.swingSound(swingSound); return this; }
         @Override
-        public AdvanceBuilder hitSound(SoundEvent hitSound) {
-            super.hitSound(hitSound);
-            return this;
-        }
-
+        public AdvanceBuilder hitSound(SoundEvent hitSound) { super.hitSound(hitSound); return this; }
         @Override
-        public AdvanceBuilder hitParticle(HitParticleType hitParticle) {
-            super.hitParticle(hitParticle);
-            return this;
-        }
-
+        public AdvanceBuilder hitParticle(HitParticleType hitParticle) { super.hitParticle(hitParticle); return this; }
         @Override
-        public AdvanceBuilder collider(Collider collider) {
-            super.collider(collider);
-            return this;
-        }
-
+        public AdvanceBuilder collider(Collider collider) { super.collider(collider); return this; }
         @Override
-        public AdvanceBuilder canBePlacedOffhand(boolean canBePlacedOffhand) {
-            super.canBePlacedOffhand(canBePlacedOffhand);
-            return this;
-        }
-
+        public AdvanceBuilder canBePlacedOffhand(boolean canBePlacedOffhand) { super.canBePlacedOffhand(canBePlacedOffhand); return this; }
         @Override
-        public AdvanceBuilder reach(float reach) {
-            super.reach(reach);
-            return this;
-        }
-
+        public AdvanceBuilder reach(float reach) { super.reach(reach); return this; }
         @Override
-        public AdvanceBuilder livingMotionModifier(Style wieldStyle, LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animation) {
-            super.livingMotionModifier(wieldStyle, livingMotion, animation);
-            return this;
-        }
-
+        public AdvanceBuilder livingMotionModifier(Style wieldStyle, LivingMotion livingMotion, AnimationAccessor<? extends StaticAnimation> animation) { super.livingMotionModifier(wieldStyle, livingMotion, animation); return this; }
         @Override
-        public AdvanceBuilder addStyleAttibutes(Style style, Pair<Attribute, AttributeModifier> attributePair) {
-            super.addStyleAttibutes(style, attributePair);
-            return this;
-        }
-
+        public AdvanceBuilder addStyleAttibutes(Style style, Pair<Attribute, AttributeModifier> attributePair) { super.addStyleAttibutes(style, attributePair); return this; }
         @Override
-        public AdvanceBuilder weaponCombinationPredicator(Function<LivingEntityPatch<?>, Boolean> predicator) {
-            super.weaponCombinationPredicator(predicator);
-            return this;
-        }
-
+        public AdvanceBuilder weaponCombinationPredicator(Function<LivingEntityPatch<?>, Boolean> predicator) { super.weaponCombinationPredicator(predicator); return this; }
         @Override
-        public AdvanceBuilder innateSkill(Style style, Function<ItemStack, Skill> innateSkill) {
-            super.innateSkill(style, innateSkill);
-            return this;
-        }
-
+        public AdvanceBuilder innateSkill(Style style, Function<ItemStack, Skill> innateSkill) { super.innateSkill(style, innateSkill); return this; }
         @Override
         @Deprecated
-        public AdvanceBuilder comboCancel(Function<Style, Boolean> comboCancel) {
-            super.comboCancel(comboCancel);
-            return this;
-        }
-
+        public AdvanceBuilder comboCancel(Function<Style, Boolean> comboCancel) { super.comboCancel(comboCancel); return this; }
         @Override
-        public AdvanceBuilder comboCounterHandler(ComboCounterHandleEvent.ComboCounterHandler comboHandler) {
-            super.comboCounterHandler(comboHandler);
-            return this;
-        }
-
+        public AdvanceBuilder comboCounterHandler(ComboCounterHandleEvent.ComboCounterHandler comboHandler) { super.comboCounterHandler(comboHandler); return this; }
         @Override
-        public AdvanceBuilder zoomInType(ZoomInType zoomInType) {
-            super.zoomInType(zoomInType);
-            return this;
-        }
+        public AdvanceBuilder zoomInType(ZoomInType zoomInType) { super.zoomInType(zoomInType); return this; }
     }
 }
