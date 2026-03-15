@@ -17,17 +17,12 @@ import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.animation.types.ActionAnimation;
 import yesman.epicfight.api.animation.types.AttackAnimation;
-import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.gameasset.ColliderPreset;
 import yesman.epicfight.gameasset.EpicFightSounds;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.particle.HitParticleType;
-import yesman.epicfight.world.capabilities.EpicFightCapabilities;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.player.PlayerPatch;
-
-import java.util.List;
 
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class MEFAnimations {
@@ -116,9 +111,9 @@ public class MEFAnimations {
     /**
      * 防御成功事件示例：弹反
      */
-    public static DefenseSuccessEvent<?> PARRY = DefenseSuccessEvent.SimpleEvent.create((ownerPatch, attackEntity, damageSource) ->{
-        if (attackEntity instanceof LivingEntity livingEntity){
-            MEFEntityAPI.beParried(livingEntity);
+    public static DefenseSuccessEvent<?> PARRY = DefenseSuccessEvent.SimpleEvent.create((defenderPatch, attackEntity, damageSource) ->{
+        if (attackEntity instanceof LivingEntity livingAttacker){
+            MEFEntityAPI.beParried(livingAttacker, defenderPatch);
         }
     });
 

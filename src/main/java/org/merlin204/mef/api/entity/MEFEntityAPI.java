@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoader;
+import org.merlin204.mef.api.animation.MEFAttackAnalyzer;
 import org.merlin204.mef.api.forgeevent.*;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.client.gui.BossBarRenderer;
@@ -254,17 +255,40 @@ public class MEFEntityAPI {
     }
 
     /**
-     * 使一个实体被弹反的方法,返回是否成功被弹反
+     * 使一个实体被弹反的方法，根据攻击方向播放对应的弹反硬直
+     * @param attacker 被弹反的实体（攻击者）
+     * @param defender 发动弹反的玩家（防御者）。如果传入null，则默认播放中段硬直。
+     * @return 是否成功播放动画
      */
-    public static boolean beParried(LivingEntity livingEntity){
-        //TODO Arc来补个判断攻击方向
-        MoreStunType moreStunType = MoreStunType.BE_PARRIED_L;
-        LivingEntityPatch<?> livingEntityPatch = EpicFightCapabilities.getEntityPatch(livingEntity, LivingEntityPatch.class);
-        if (livingEntityPatch != null && getMoreStunAnimation(livingEntityPatch,moreStunType) != null){
-            livingEntityPatch.playAnimationSynchronized(getMoreStunAnimation(livingEntityPatch,moreStunType),0);
+    public static boolean beParried(LivingEntity attacker, @Nullable LivingEntityPatch<?> defender) {
+        MoreStunType moreStunType = MoreStunType.BE_PARRIED_M;
+
+        if (defender != null) {
+            MEFAttackAnalyzer.AttackDirection direction = MEFAttackAnalyzer.analyzeAttackDirection(defender, attacker);
+
+            // 1. 如果攻击从玩家的左侧打来，弹反后怪物的武器会被向右弹开 -> 判定 BE_PARRIED_R (目标的右侧受击)
+            // 2. 如果攻击从玩家的右侧打来，弹反后怪物的武器会被向左弹开 -> 判定 BE_PARRIED_L (目标的左侧受击)
+            // 3. 正面下劈、突刺 -> 武器向中段/正上方弹开 -> 判定 BE_PARRIED_M
+            moreStunType = switch (direction) {
+                case LEFT_ATTACK, LEFT_SLIGHT_ATTACK, LEFT_SIDE -> MoreStunType.BE_PARRIED_R;
+                case RIGHT_ATTACK, RIGHT_SLIGHT_ATTACK, RIGHT_SIDE -> MoreStunType.BE_PARRIED_L;
+                default -> MoreStunType.BE_PARRIED_M;
+            };
+        }
+
+        LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(attacker, LivingEntityPatch.class);
+
+        if (attackerPatch != null && getMoreStunAnimation(attackerPatch, moreStunType) != null) {
+            attackerPatch.playAnimationSynchronized(getMoreStunAnimation(attackerPatch, moreStunType), 0);
             return true;
         }
-        return livingEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),80,0));
+
+        if (attackerPatch != null && moreStunType != MoreStunType.BE_PARRIED_M && getMoreStunAnimation(attackerPatch, MoreStunType.BE_PARRIED_M) != null) {
+            attackerPatch.playAnimationSynchronized(getMoreStunAnimation(attackerPatch, MoreStunType.BE_PARRIED_M), 0);
+            return true;
+        }
+
+        return attacker.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(), 80, 0));
     }
 
     /**
