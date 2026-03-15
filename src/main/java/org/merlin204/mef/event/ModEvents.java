@@ -44,6 +44,7 @@ public class ModEvents {
 
 
 
+
     /**
      * 防御动画的处理
      */
@@ -100,6 +101,7 @@ public class ModEvents {
     public static void staminaTypeRegistry(StaminaTypeRegistryEvent event) {
         event.getMap().put(EntityType.IRON_GOLEM,new SekiroStaminaType(50,0F));
         event.getMap().put(EntityType.POLAR_BEAR,new SekiroStaminaType(20,0F));
+        event.getMap().put(EntityType.WARDEN,new DarkSoulStaminaType(20,0F));
 
         event.getMap().put(EntityType.WOLF,new DarkSoulStaminaType(5,0F));
 

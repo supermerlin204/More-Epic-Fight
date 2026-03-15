@@ -1,4 +1,4 @@
-package org.merlin204.mef.skill;
+package org.merlin204.mef.epicfight.skill;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;

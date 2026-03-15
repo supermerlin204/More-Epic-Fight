@@ -13,6 +13,8 @@ import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
+import org.merlin204.mef.client.gui.ExecuteIconRenderCommand;
+import org.merlin204.mef.client.gui.ExecuteIconRenderer;
 import org.merlin204.mef.client.render.MEFRenderTypes;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import org.merlin204.mef.registry.MEFMobEffects;
@@ -61,25 +63,35 @@ public class HealthBarMixin {
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
 
             //绘制处决图标
-            if (entity == playerPatch.getTarget() && MEFEntityAPI.canExecute(playerPatch) && entity.isAlive()){
-                float rio = mefEntity.getKnockdownTime()/100F;
-
-                if (entityPatch != null && entityPatch.getHitAnimation(StunType.KNOCKDOWN) != null && entityPatch.getAnimator().getPlayerFor(null).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)){
-                    rio = entityPatch.getAnimator().getPlayerFor(null).getElapsedTime()/ entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
+            if (entity == playerPatch.getTarget() && MEFEntityAPI.canExecute(playerPatch) && entity.isAlive() || true){
+                float rio = mefEntity.getKnockdownTime() / 100F;
+                if (entityPatch != null && entityPatch.getHitAnimation(StunType.KNOCKDOWN) != null &&
+                        entityPatch.getAnimator().getPlayerFor(null).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)) {
+                    rio = entityPatch.getAnimator().getPlayerFor(null).getElapsedTime() / entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
                 }
-                rio = Mth.clamp(rio,0F,1F);
-                Matrix4f matrix4f = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
-                        poseStack, entity, 0.0F, entity.getBbHeight()/2, 0.0F, true, partialTicks
+                rio = Mth.clamp(rio, 0F, 1F);
+                int step = (int) (59F * rio);
+
+                float scales = 2F * entity.getBbWidth();
+                float size = 0.2F * scales;
+
+                // 使用原有的矩阵计算方法（复用 EntityUI 的方法）
+                Matrix4f matrix = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
+                        poseStack, entity, 0.0F, entity.getBbHeight() / 2, 0.0F, true, partialTicks
                 );
-                int step = (int) (59F*rio);
 
-                float size = 0.2F * scale;
+                float minU = step / 60F;
+                float maxU = (step + 1) / 60F;
+                float minV = 0.0F;
+                float maxV = 1.0F;
 
-                mef$draw(matrix4f, EXECUTE, buffers,
+                // 创建渲染指令并添加
+                ExecuteIconRenderCommand cmd = new ExecuteIconRenderCommand(
+                        matrix, EXECUTE,
                         -size, -size, size, size,
-                        step/60F, 0.0F, (step+1)/60F, 1.0F);
-
-
+                        minU, minV, maxU, maxV
+                );
+                ExecuteIconRenderer.addCommand(cmd);
             }
 
             if (mefEntity.getStaminaType().getBarRenderType() != StaminaType.BarRenderType.SMALL)return;
@@ -140,6 +152,7 @@ public class HealthBarMixin {
     @Unique
     private static void mef$draw(Matrix4f matrix, ResourceLocation textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, float minU, float minV, float maxU, float maxV) {
         VertexConsumer vertexConsumer = buffer.getBuffer(MEFRenderTypes.alwaysOnTop(textureLocation));
+
         vertexConsumer.vertex(matrix, minX, minY, 0.0F).uv(minU, maxV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
         vertexConsumer.vertex(matrix, maxX, minY, 0.0F).uv(maxU, maxV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
         vertexConsumer.vertex(matrix, maxX, maxY, 0.0F).uv(maxU, minV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();

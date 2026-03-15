@@ -5,6 +5,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.fml.ModLoader;
@@ -17,6 +18,7 @@ import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.registry.MEFMobEffects;
+import org.merlin204.mef.world.entity.ai.attribute.MEFAttributeSupplier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,6 +32,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.damagesource.StunType;
+import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 @Mixin(value = EntityEvents.class, remap = false)
 public class EntityEventsMixin {
@@ -88,6 +91,14 @@ public class EntityEventsMixin {
             LivingEntityPatch<?> attackerEntityPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
             LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
             if (attackerEntityPatch != null  && damageSource instanceof EpicFightDamageSource epicFightDamageSource) {
+                //有耐力条的不执行EF的破防倒地
+                if (MEFEntityAPI.getStaminaTypeByEntity(hitEntity) != null){
+                    if (epicFightDamageSource.getStunType() == StunType.KNOCKDOWN || epicFightDamageSource.getStunType() == StunType.NEUTRALIZE ){
+                        epicFightDamageSource.setStunType(StunType.LONG);
+                    }
+                }
+
+
                 if (epicFightDamageSource.getAnimation().get() instanceof AttackAnimation animation){
                     //如果伤害源的动画是处决动画
                     if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){

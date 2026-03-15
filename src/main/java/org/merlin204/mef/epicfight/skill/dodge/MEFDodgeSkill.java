@@ -1,4 +1,4 @@
-package org.merlin204.mef.skill.dodge;
+package org.merlin204.mef.epicfight.skill.dodge;
 
 import com.google.common.collect.Maps;
 import net.minecraft.client.Minecraft;
