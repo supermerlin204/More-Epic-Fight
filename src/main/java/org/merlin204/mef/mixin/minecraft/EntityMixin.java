@@ -2,24 +2,17 @@ package org.merlin204.mef.mixin.minecraft;
 
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
-import net.minecraft.world.level.Level;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.client.gui.MEFBossBarManager;
-import org.merlin204.mef.world.entity.ai.attribute.MEFAttributeSupplier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 @Mixin(value = Entity.class)
 public class EntityMixin {

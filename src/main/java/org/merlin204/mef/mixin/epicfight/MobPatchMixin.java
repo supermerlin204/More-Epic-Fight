@@ -1,6 +1,5 @@
 package org.merlin204.mef.mixin.epicfight;
 
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
@@ -14,8 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import yesman.epicfight.api.animation.LivingMotions;
-import yesman.epicfight.api.utils.AttackResult;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.entitypatch.MobPatch;
 
 @Mixin(value = MobPatch.class,remap = false)

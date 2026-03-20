@@ -5,6 +5,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.stamina.StaminaType;
@@ -28,6 +29,12 @@ public class MEFEntity {
     protected static EntityDataAccessor<Integer> WONDER_TIME;
     //倒地时间(非玩家的MobEffect持续时间不会双端同步,因此需要单独记录)
     protected static EntityDataAccessor<Integer> KNOCKDOWN_TIME;
+    //是否在被处决时死亡
+    private boolean isDoomed = false;
+    //被处决实体的伤害源记录
+    private DamageSource executionDamageSource = null;
+    //正在被处决
+    private boolean isBeingExecuted = false;
 
     public static void initLivingEntityDataAccessor() {
         STAMINA = SynchedEntityData.defineId(LivingEntity.class, EntityDataSerializers.FLOAT);
@@ -170,6 +177,32 @@ public class MEFEntity {
             getStaminaType().whenZero(this);
         }
         getOriginal().getEntityData().set(STAMINA,targetAmount);
+    }
+
+    public void setBeingExecuted(boolean beingExecuted) {
+        this.isBeingExecuted = beingExecuted;
+    }
+
+    public boolean isBeingExecuted() {
+        return this.isBeingExecuted;
+    }
+
+    public void markDoomed(DamageSource source) {
+        this.isDoomed = true;
+        this.executionDamageSource = source;
+    }
+
+    public boolean isDoomed() {
+        return this.isDoomed;
+    }
+
+    public DamageSource getExecutionDamageSource() {
+        return this.executionDamageSource;
+    }
+
+    public void clearDoomed() {
+        this.isDoomed = false;
+        this.executionDamageSource = null;
     }
 
     public void saveNBTData(CompoundTag tag) {

@@ -3,10 +3,7 @@ package org.merlin204.mef.api.forgeevent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
-import org.merlin204.mef.api.entity.MoreStunType;
 import org.merlin204.mef.api.stamina.StaminaType;
-import yesman.epicfight.api.animation.AnimationManager;
-import yesman.epicfight.api.animation.types.StaticAnimation;
 
 import java.util.Map;
 

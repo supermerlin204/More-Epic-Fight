@@ -4,34 +4,25 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import org.merlin204.mef.api.animation.defense.DefenseTimePair;
 import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
-import org.merlin204.mef.api.entity.MoreLivingMotions;
 import org.merlin204.mef.api.entity.MoreStunType;
 import org.merlin204.mef.api.forgeevent.*;
-
 import org.merlin204.mef.api.network.PacketHandler;
-import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.api.stamina.type.DarkSoulStaminaType;
 import org.merlin204.mef.api.stamina.type.SekiroStaminaType;
-import org.merlin204.mef.epicfight.MEFAnimations;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
-import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.api.utils.AttackResult;
-import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
-import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,11 +33,8 @@ import static org.merlin204.mef.epicfight.MEFAnimations.*;
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class ModEvents {
 
-
-
-
     /**
-     * 防御动画的处理
+     * 防御与处决无敌帧的处理
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void attackResultEvent(AttackResultEvent event) {
@@ -54,44 +42,85 @@ public class ModEvents {
         LivingEntity hitEntity = event.getBeAttacked();
         DamageSource damageSource = event.getSource();
 
-        if (causingEntity != null) {
-            LivingEntityPatch<?> attackerEntityPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
-            if (attackerEntityPatch != null) {
-                StaticAnimation animation = attackerEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
-                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
-                    //TODO 只对倒地的实体造成伤害?
-                }
-            }
+        if (causingEntity == null || hitEntity == null) return;
 
-            LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
-            if (hitEntityPatch != null){
-                StaticAnimation animation = hitEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
-                float time = hitEntityPatch.getAnimator().getPlayerFor(null).getElapsedTime();
-                //处决时不受伤害
-                if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
-                    event.setAttackResult(AttackResult.blocked(event.getDamage()));
-                }
-                if (animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
-                    boolean successful = false;
-                    for (DefenseTimePair defenseTimePair:animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
-                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(hitEntityPatch,causingEntity,damageSource)){
-                            defenseTimePair.defenseSuccess(hitEntityPatch,causingEntity,damageSource);
-                            successful = true;
-                        }
-                    }
-                    if (successful){
-                        event.setAttackResult(AttackResult.blocked(event.getDamage()));
-                        EpicFightCapabilities.getUnparameterizedEntityPatch(event.getSource().getEntity(), LivingEntityPatch.class).ifPresent(patch -> {
-                            patch.setLastAttackResult(AttackResult.blocked(event.getDamage()));
-                        });
-                    }
-                }
+        LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
+        LivingEntityPatch<?> hitPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
 
+        boolean isAttackerExecuting = false;
+        if (attackerPatch != null) {
+            var attackerPlayer = attackerPatch.getAnimator().getPlayerFor(null);
+            if (attackerPlayer != null) {
+                var attackerAnim = attackerPlayer.getRealAnimation().get();
+                if (attackerAnim != null) {
+                    isAttackerExecuting = attackerAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
+                }
             }
         }
 
+        boolean isVictimDoingExecution = false;
+        boolean isVictimBeingExecuted = MEFEntityAPI.canBeExecute(hitEntity);
 
+        if (hitPatch != null) {
+            var hitPlayer = hitPatch.getAnimator().getPlayerFor(null);
+            if (hitPlayer != null) {
+                var victimAnim = hitPlayer.getRealAnimation().get();
+                if (victimAnim != null) {
+                    isVictimDoingExecution = victimAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
 
+                    var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(hitPatch, MoreStunType.BE_EXECUTED_START);
+                    boolean isPlayingVictimAnim = victimAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false) ||
+                            (startAnimAccessor != null && victimAnim.equals(startAnimAccessor.get()));
+
+                    isVictimBeingExecuted = isVictimBeingExecuted || isPlayingVictimAnim;
+                }
+            }
+        }
+
+        if (isVictimDoingExecution) {
+            event.setAttackResult(AttackResult.blocked(0.0F));
+            return;
+        }
+
+        if (isVictimBeingExecuted) {
+            if (!isAttackerExecuting) {
+                event.setAttackResult(AttackResult.blocked(0.0F));
+                return;
+            }
+        }
+
+        if (isAttackerExecuting) {
+            if (!isVictimBeingExecuted) {
+                event.setAttackResult(AttackResult.blocked(0.0F));
+                return;
+            }
+        }
+
+        if (hitPatch != null) {
+            var hitPlayer = hitPatch.getAnimator().getPlayerFor(null);
+            if (hitPlayer != null) {
+                var animation = hitPlayer.getRealAnimation().get();
+                float time = hitPlayer.getElapsedTime();
+
+                if (animation != null && animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
+                    boolean successful = false;
+
+                    for (DefenseTimePair defenseTimePair : animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
+                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(hitPatch, causingEntity, damageSource)){
+                            defenseTimePair.defenseSuccess(hitPatch, causingEntity, damageSource);
+                            successful = true;
+                        }
+                    }
+
+                    if (successful){
+                        event.setAttackResult(AttackResult.blocked(event.getDamage()));
+                        if (attackerPatch != null) {
+                            attackerPatch.setLastAttackResult(AttackResult.blocked(event.getDamage()));
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -110,8 +139,6 @@ public class ModEvents {
         event.getMap().put(EntityType.SHULKER,new DarkSoulStaminaType(5,0F));
         event.getMap().put(EntityType.WITHER_SKELETON,new DarkSoulStaminaType(5,0F));
     }
-
-
 
     /**
      * 为所有的EF人型实体添加更多硬直动画
@@ -159,22 +186,24 @@ public class ModEvents {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void ExecuteAnimationRegistryEvent(ExecuteAnimationRegistryEvent event) {
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.NOT_WEAPON,FIST_EXECUTE);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.FIST,FIST_EXECUTE);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.LONGSWORD,ONE_HAND_EXECUTE);
+        event.registerCategory(CapabilityItem.WeaponCategories.NOT_WEAPON, FIST_EXECUTE, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.FIST, FIST_EXECUTE, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.LONGSWORD, ONE_HAND_EXECUTE, null);
 
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.DAGGER,ONE_HAND_EXECUTE);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SWORD,ONE_HAND_EXECUTE);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.TACHI,ONE_HAND_EXECUTE);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.TRIDENT,ONE_HAND_EXECUTE);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.UCHIGATANA,ONE_HAND_EXECUTE);
+        event.registerCategory(CapabilityItem.WeaponCategories.DAGGER, ONE_HAND_EXECUTE, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.SWORD, ONE_HAND_EXECUTE, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ONE_HAND_EXECUTE, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.TRIDENT, ONE_HAND_EXECUTE, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.UCHIGATANA, ONE_HAND_EXECUTE, null);
 
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SHOVEL,ONE_HAND_EXECUTE_HARD);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.AXE,ONE_HAND_EXECUTE_HARD);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.HOE,ONE_HAND_EXECUTE_HARD);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.PICKAXE,ONE_HAND_EXECUTE_HARD);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.SPEAR,ONE_HAND_EXECUTE_HARD);
-        event.getWeaponCategoryMap().put(CapabilityItem.WeaponCategories.GREATSWORD,ONE_HAND_EXECUTE_HARD);
+        event.registerCategory(CapabilityItem.WeaponCategories.SHOVEL, ONE_HAND_EXECUTE_HARD, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.AXE, ONE_HAND_EXECUTE_HARD, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.HOE, ONE_HAND_EXECUTE_HARD, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.PICKAXE, ONE_HAND_EXECUTE_HARD, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.SPEAR, ONE_HAND_EXECUTE_HARD, null);
+        event.registerCategory(CapabilityItem.WeaponCategories.GREATSWORD, ONE_HAND_EXECUTE_HARD, null);
+
+        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
     }
 
     @SubscribeEvent

@@ -43,12 +43,18 @@ public abstract class StaminaType {
 
     }
 
-
     /**
      * 倒地结束的时候
      */
     public void whenKnockDownEnd(MEFEntity mefEntity){
+    }
 
+    /**
+     * 被处决动画结束的时候
+     * 用于重置怪物的耐力、解除硬直、进入下一阶段等
+     */
+    public void whenExecutionEnd(MEFEntity mefEntity){
+        this.whenKnockDownEnd(mefEntity);
     }
 
     /**

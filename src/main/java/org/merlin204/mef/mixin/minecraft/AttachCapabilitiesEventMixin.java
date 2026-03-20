@@ -5,7 +5,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
-import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.capability.MEFEntityCapabilityProvider;
 import org.merlin204.mef.epicfight.IMEFPatch;
 import org.merlin204.mef.main.MoreEpicFightMod;

@@ -3,7 +3,6 @@ package org.merlin204.mef.api.animation.defense;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
-import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 
 import java.util.ArrayList;
 import java.util.List;

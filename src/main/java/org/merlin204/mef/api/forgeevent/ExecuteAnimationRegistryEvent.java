@@ -3,31 +3,42 @@ package org.merlin204.mef.api.forgeevent;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
+import org.merlin204.mef.api.execution.ExecutionAnimSet;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.world.capabilities.item.WeaponCategory;
 
 import java.util.Map;
 
-
-/**
- * 添加处决动画
- */
 public class ExecuteAnimationRegistryEvent extends Event implements IModBusEvent {
-    private final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> weaponCategoryMap;
-    private final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> classMap;
 
-    public ExecuteAnimationRegistryEvent(Map<WeaponCategory, AnimationManager.AnimationAccessor<? extends StaticAnimation>> weaponCategoryMap, Map<Class<? extends Item>, AnimationManager.AnimationAccessor<? extends StaticAnimation>> classMap) {
+    private final Map<WeaponCategory, ExecutionAnimSet> weaponCategoryMap;
+    private final Map<Class<? extends Item>, ExecutionAnimSet> classMap;
+
+    public ExecuteAnimationRegistryEvent(
+            Map<WeaponCategory, ExecutionAnimSet> weaponCategoryMap,
+            Map<Class<? extends Item>, ExecutionAnimSet> classMap) {
         this.weaponCategoryMap = weaponCategoryMap;
         this.classMap = classMap;
     }
 
+    public void registerCategory(WeaponCategory category,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim) {
+        this.weaponCategoryMap.put(category, new ExecutionAnimSet(attackerAnim, victimAnim));
+    }
 
-    public Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> getWeaponCategoryMap() {
+    public void registerItemClass(Class<? extends Item> itemClass,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim) {
+        this.classMap.put(itemClass, new ExecutionAnimSet(attackerAnim, victimAnim));
+    }
+
+    public Map<WeaponCategory, ExecutionAnimSet> getWeaponCategoryMap() {
         return weaponCategoryMap;
     }
 
-    public Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> getClassMap() {
+    public Map<Class<? extends Item>, ExecutionAnimSet> getClassMap() {
         return classMap;
     }
 }

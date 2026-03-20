@@ -5,20 +5,17 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.fml.ModLoader;
-import org.merlin204.mef.api.animation.defense.DefenseTimePair;
 import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreStunType;
+import org.merlin204.mef.api.execution.ExecutionAnimSet;
 import org.merlin204.mef.api.forgeevent.AttackResultEvent;
-import org.merlin204.mef.api.forgeevent.MoreStunTypeRegistryEvent;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.registry.MEFMobEffects;
-import org.merlin204.mef.world.entity.ai.attribute.MEFAttributeSupplier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,7 +29,6 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 import yesman.epicfight.world.damagesource.StunType;
-import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
 
 @Mixin(value = EntityEvents.class, remap = false)
 public class EntityEventsMixin {
@@ -59,7 +55,7 @@ public class EntityEventsMixin {
         ModLoader.get().postEvent(attackResultEvent);
         attackResult = attackResultEvent.getAttackResult();
 
-        if (MEFEntityAPI.getStaminaTypeByEntity(atk) != null && atkMefEntity != null){
+        if (MEFEntityAPI.getStaminaTypeByEntity(atk) != null){
             if (attackResult.resultType == AttackResult.ResultType.BLOCKED){
                 atkMefEntity.getStaminaType().whenBeBlocked(atkMefEntity,damage, source);
             }else if (attackResult.resultType == AttackResult.ResultType.MISSED){
@@ -67,7 +63,7 @@ public class EntityEventsMixin {
             }
         }
 
-        if (MEFEntityAPI.getStaminaTypeByEntity(hurt) != null && hurtMefEntity != null){
+        if (MEFEntityAPI.getStaminaTypeByEntity(hurt) != null){
             if (attackResult.resultType == AttackResult.ResultType.BLOCKED){
                 hurtMefEntity.getStaminaType().whenBlock(atkMefEntity,damage, source);
             }else if (attackResult.resultType == AttackResult.ResultType.MISSED){
@@ -90,51 +86,72 @@ public class EntityEventsMixin {
         if (causingEntity != null) {
             LivingEntityPatch<?> attackerEntityPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
             LivingEntityPatch<?> hitEntityPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
-            if (attackerEntityPatch != null  && damageSource instanceof EpicFightDamageSource epicFightDamageSource) {
-                //有耐力条的不执行EF的破防倒地
+
+            if (attackerEntityPatch != null && damageSource instanceof EpicFightDamageSource epicFightDamageSource) {
+
+                // 有耐力条的不执行EF的破防倒地
                 if (MEFEntityAPI.getStaminaTypeByEntity(hitEntity) != null){
                     if (epicFightDamageSource.getStunType() == StunType.KNOCKDOWN || epicFightDamageSource.getStunType() == StunType.NEUTRALIZE ){
                         epicFightDamageSource.setStunType(StunType.LONG);
                     }
                 }
 
-
                 if (epicFightDamageSource.getAnimation().get() instanceof AttackAnimation animation){
-                    //如果伤害源的动画是处决动画
-                    if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).isPresent() && animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).get()){
+                    // 如果伤害源的动画是处决动画
+                    if (animation.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false)){
                         boolean successful = false;
-                        //检查是否是史诗战斗实体
+
+                        // 检查是否是史诗战斗实体
                         if (hitEntityPatch != null){
-                            StaticAnimation targetAnimation = hitEntityPatch.getAnimator().getPlayerFor(null).getRealAnimation().get();
-                            //判断是否已经进入处决状态,进入处决状态再受伤则播放处决结束动画,未触发则播放处决开始动画
-                            if (MEFEntityAPI.getMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_START) !=null && targetAnimation == MEFEntityAPI.getMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_START).get()){
-                                successful = MEFEntityAPI.playMoreStunAnimation(hitEntityPatch,MoreStunType.BE_EXECUTED_END);
-                            }else {
-                                successful = MEFEntityAPI.playMoreStunAnimation(hitEntityPatch,MoreStunType.BE_EXECUTED_START);
-                            }
-                            //若成功播放硬直则强制转向实体
-                            if (successful){
-                                float yRot = attackerEntityPatch.getYRot() + 180;
-                                hitEntity.setYRot(yRot);
-                                hitEntity.yBodyRot = yRot;
-                                hitEntity.yBodyRotO = yRot;
-                                hitEntity.yRotO = yRot;
+                            var hitPlayer = hitEntityPatch.getAnimator().getPlayerFor(null);
+                            if (hitPlayer != null) {
+                                StaticAnimation targetAnimation = hitPlayer.getRealAnimation().get();
+
+                                // 获取当前武器的处决动作表】
+                                ExecutionAnimSet animSet = MEFEntityAPI.getExecutionAnimSet(attackerEntityPatch);
+
+                                if (animSet != null && animSet.victimAnim() != null) {
+                                    // ====== 单处决动画 ======
+                                    if (!targetAnimation.equals(animSet.victimAnim().get())) {
+                                        hitEntityPatch.playAnimationSynchronized(animSet.victimAnim(), 0);
+                                    }
+                                    successful = true;
+                                } else {
+                                    // ====== BE_EXECUTED_START / END ======
+                                    var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_START);
+                                    if (startAnimAccessor != null && targetAnimation.equals(startAnimAccessor.get())){
+                                        successful = MEFEntityAPI.playMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_END);
+                                    } else {
+                                        successful = MEFEntityAPI.playMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_START);
+                                    }
+                                }
+
+                                // 若成功确认动画，强制转向实体
+                                if (successful){
+                                    float yRot = attackerEntityPatch.getYRot() + 180;
+                                    hitEntity.setYRot(yRot);
+                                    hitEntity.yBodyRot = yRot;
+                                    hitEntity.yBodyRotO = yRot;
+                                    hitEntity.yRotO = yRot;
+                                }
                             }
                         }
-                        //若未能成功播放动画或压根不是史诗战斗实体则尝试给实体添加眩晕buff
+
+                        // 若未能成功播放动画或压根不是史诗战斗实体，则尝试给实体添加眩晕buff
                         if (!successful){
                             if (hitEntity.hasEffect(MEFMobEffects.KNOCKDOWN.get())){
                                 hitEntity.removeEffect(MEFMobEffects.KNOCKDOWN.get());
-                                successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),60,0,false,false,false));
-                            }else if (hitEntity.hasEffect(MEFMobEffects.STUN.get())){
-                                successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(),60,0,false,false,false));
+                                successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(), 60, 0, false, false, false));
+                            } else if (hitEntity.hasEffect(MEFMobEffects.STUN.get())){
+                                successful = hitEntity.addEffect(new MobEffectInstance(MEFMobEffects.STUN.get(), 60, 0, false, false, false));
                             }
                         }
-                        //若成功播放或添加效果则取消史诗战斗的硬直,并进行伤害加成
+
+                        // 结算处决伤害与免除原版硬直
                         if (successful){
                             if (MEFEntityAPI.getStaminaTypeByEntity(hitEntity) != null){
                                 MEFEntity hit = MEFCapabilities.getMEFEntity(hitEntity);
-                                event.setAmount(hit.getStaminaType().beExecutedDamageModifier(hit,damageSource,event.getAmount()));
+                                event.setAmount(hit.getStaminaType().beExecutedDamageModifier(hit, damageSource, event.getAmount()));
                             }
                             epicFightDamageSource.setStunType(StunType.NONE);
                         }

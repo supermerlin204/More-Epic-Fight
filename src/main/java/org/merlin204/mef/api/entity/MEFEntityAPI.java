@@ -1,17 +1,23 @@
+// file_name: MEFEntityAPI.java
 package org.merlin204.mef.api.entity;
 
 import com.google.common.collect.Maps;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoader;
 import org.merlin204.mef.api.animation.MEFAttackAnalyzer;
+import org.merlin204.mef.api.execution.ExecutionAnimSet;
+import org.merlin204.mef.api.execution.MEFExecutionRegistry;
 import org.merlin204.mef.api.forgeevent.*;
 import org.merlin204.mef.api.stamina.StaminaType;
 import org.merlin204.mef.client.gui.BossBarRenderer;
@@ -28,6 +34,7 @@ import yesman.epicfight.world.capabilities.item.WeaponCategory;
 import yesman.epicfight.world.damagesource.StunType;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -43,11 +50,6 @@ public class MEFEntityAPI {
     //存储弹反动画的map
     private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
     private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> PARRY_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
-
-    //存储处决动画的map
-    private static final Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES = Maps.newHashMap();
-    private static final Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> EXECUTE_ANIMATIONS_WITH_CLASS = Maps.newHashMap();
-
 
     /**
      * 逻辑集的初始化
@@ -78,16 +80,7 @@ public class MEFEntityAPI {
         PARRY_ANIMATIONS_WITH_WEAPON_CATEGORIES.putAll(parryWeaponCategory);
         PARRY_ANIMATIONS_WITH_CLASS.putAll(parryClassMap);
 
-        Map<WeaponCategory,AnimationManager.AnimationAccessor<?extends StaticAnimation>> executeWeaponCategory = Maps.newHashMap();
-        Map<Class<? extends Item>,AnimationManager.AnimationAccessor<?extends StaticAnimation>> executeClassMap = Maps.newHashMap();
-
-        ExecuteAnimationRegistryEvent executeAnimationRegistryEvent = new ExecuteAnimationRegistryEvent(executeWeaponCategory, executeClassMap);
-        ModLoader.get().postEvent(executeAnimationRegistryEvent);
-
-        EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.putAll(executeWeaponCategory);
-        EXECUTE_ANIMATIONS_WITH_CLASS.putAll(executeClassMap);
-
-
+        MEFExecutionRegistry.fireRegistryEvent();
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -114,12 +107,51 @@ public class MEFEntityAPI {
     /**
      * 检查玩家是否能发动处决
      */
-    public static boolean canExecute(PlayerPatch<?> playerPatch){
+    @Nullable
+    public static LivingEntity getNearbyExecutableEntity(PlayerPatch<?> playerPatch) {
+        LivingEntity player = playerPatch.getOriginal();
+
+        LivingEntity currentTarget = playerPatch.getTarget();
+        if (currentTarget != null && currentTarget.isAlive()) {
+            if (player.distanceTo(currentTarget) <= currentTarget.getBbWidth() + 2.5F) {
+                if (canBeExecute(currentTarget)) {
+                    return currentTarget;
+                }
+            }
+        }
+
+        AABB searchBox = player.getBoundingBox().inflate(3.0D, 2.0D, 3.0D);
+        List<LivingEntity> nearbyEntities = player.level().getEntitiesOfClass(LivingEntity.class, searchBox,
+                entity -> entity != player && entity.isAlive() && canBeExecute(entity));
+
+        LivingEntity bestTarget = null;
+        double minScore = Double.MAX_VALUE;
+
+        Vec3 lookVec = player.getLookAngle();
+        for (LivingEntity entity : nearbyEntities) {
+            Vec3 dirToEntity = entity.position().subtract(player.position()).normalize();
+            double dotProduct = lookVec.dot(dirToEntity);
+
+            if (dotProduct > 0) {
+                double distanceSq = player.distanceToSqr(entity);
+                double anglePenalty = (1.0 - dotProduct) * 10.0;
+                double score = distanceSq + anglePenalty;
+
+                if (score < minScore) {
+                    minScore = score;
+                    bestTarget = entity;
+                }
+            }
+        }
+
+        return bestTarget;
+    }
+
+    public static boolean canExecute(PlayerPatch<?> playerPatch, @Nullable LivingEntity target) {
         boolean baseResult = false;
-        LivingEntity target = playerPatch.getTarget();
 
         if (target != null && playerPatch.getEntityState().canUseSkill()) {
-            if (target.distanceTo(playerPatch.getOriginal()) <= target.getBbWidth() + 2) {
+            if (target.distanceTo(playerPatch.getOriginal()) <= target.getBbWidth() + 2.5F) {
                 baseResult = canBeExecute(target);
             }
         }
@@ -172,35 +204,82 @@ public class MEFEntityAPI {
         return STAMINA_TYPE_MAP.get(entity.getType());
     }
 
+    public static boolean tryPlayExecuteAnimation(LivingEntityPatch<?> patch){
+        return tryPlayExecuteAnimation(patch, null);
+    }
+
     /**
      * 根据实体手中物品尝试播放处决动画,返回是否成功播放
-     * 动画选取优先级顺序为主手物品类-主手武器类型-副手物品类-副手武器类型-
+     * 动画选取优先级顺序为主手物品类-主手武器类型-副手物品类-副手武器类型
      */
-    public static boolean tryPlayExecuteAnimation(LivingEntityPatch<?> patch){
-        CapabilityItem main = patch.getAdvancedHoldingItemCapability(InteractionHand.MAIN_HAND);
-        CapabilityItem off = patch.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
-        Class<? extends Item> mainClass = patch.getAdvancedHoldingItemStack(InteractionHand.MAIN_HAND).getItem().getClass();
-        Class<? extends Item> offClass = patch.getAdvancedHoldingItemStack(InteractionHand.OFF_HAND).getItem().getClass();
-        AnimationManager.AnimationAccessor<?extends StaticAnimation> animationAccessor = null;
+    public static boolean tryPlayExecuteAnimation(LivingEntityPatch<?> attacker, @Nullable LivingEntityPatch<?> victim) {
+        ExecutionAnimSet animSet = getExecutionAnimSet(attacker);
 
-        if (EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.containsKey(off.getWeaponCategory())){
-            animationAccessor = EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.get(off.getWeaponCategory());
-        }
-        if (EXECUTE_ANIMATIONS_WITH_CLASS.containsKey(offClass)){
-            animationAccessor = EXECUTE_ANIMATIONS_WITH_CLASS.get(offClass);
-        }
-        if (EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.containsKey(main.getWeaponCategory())){
-            animationAccessor = EXECUTE_ANIMATIONS_WITH_WEAPON_CATEGORIES.get(main.getWeaponCategory());
-        }
-        if (EXECUTE_ANIMATIONS_WITH_CLASS.containsKey(mainClass)){
-            animationAccessor = EXECUTE_ANIMATIONS_WITH_CLASS.get(mainClass);
-        }
+        if (animSet != null) {
+            if (victim != null) {
+                correctExecutionPosition(attacker.getOriginal(), victim.getOriginal());
 
-        if (animationAccessor != null){
-            patch.playAnimationSynchronized(animationAccessor,0);
+                if (animSet.victimAnim() != null) {
+                    victim.playAnimationSynchronized(animSet.victimAnim(), 0);
+                }
+            }
+
+            if (animSet.attackerAnim() != null) {
+                attacker.playAnimationSynchronized(animSet.attackerAnim(), 0);
+            }
+
             return true;
         }
+
         return false;
+    }
+
+    /**
+     * 处决位置朝向修正
+     */
+    public static void correctExecutionPosition(LivingEntity aEnt, LivingEntity vEnt) {
+        Vec3 dir = vEnt.position().subtract(aEnt.position()).multiply(1, 0, 1);
+        if (dir.lengthSqr() > 0.0001) {
+            dir = dir.normalize();
+        } else {
+            dir = Vec3.directionFromRotation(0, aEnt.getYRot()).multiply(1, 0, 1).normalize();
+        }
+
+        double optimalDist = (aEnt.getBbWidth() + vEnt.getBbWidth()) / 2.0 + 0.5;
+        double minDist = (aEnt.getBbWidth() + vEnt.getBbWidth()) / 2.0;
+
+        boolean foundSafePos = false;
+        Vec3 safePos = aEnt.position();
+
+        for (double d = optimalDist; d >= minDist; d -= 0.2) {
+            Vec3 testPos = vEnt.position().subtract(dir.scale(d));
+            testPos = new Vec3(testPos.x, aEnt.getY(), testPos.z);
+
+            AABB testBox = aEnt.getBoundingBox().move(testPos.x - aEnt.getX(), 0, testPos.z - aEnt.getZ());
+
+            if (aEnt.level().noCollision(aEnt, testBox)) {
+                safePos = testPos;
+                foundSafePos = true;
+                break;
+            }
+        }
+
+        if (foundSafePos) {
+            aEnt.teleportTo(safePos.x, safePos.y, safePos.z);
+        }
+
+        float targetYaw = (float) (Mth.atan2(dir.z, dir.x) * (180D / Math.PI)) - 90.0F;
+
+        aEnt.setYRot(targetYaw);
+        aEnt.yBodyRot = targetYaw;
+        aEnt.yHeadRot = targetYaw;
+        aEnt.yRotO = targetYaw;
+
+        float vRot = targetYaw + 180.0F;
+        vEnt.setYRot(vRot);
+        vEnt.yBodyRot = vRot;
+        vEnt.yHeadRot = vRot;
+        vEnt.yRotO = vRot;
     }
 
     /**
@@ -266,9 +345,6 @@ public class MEFEntityAPI {
         if (defender != null) {
             MEFAttackAnalyzer.AttackDirection direction = MEFAttackAnalyzer.analyzeAttackDirection(defender, attacker);
 
-            // 1. 如果攻击从玩家的左侧打来，弹反后怪物的武器会被向右弹开 -> 判定 BE_PARRIED_R (目标的右侧受击)
-            // 2. 如果攻击从玩家的右侧打来，弹反后怪物的武器会被向左弹开 -> 判定 BE_PARRIED_L (目标的左侧受击)
-            // 3. 正面下劈、突刺 -> 武器向中段/正上方弹开 -> 判定 BE_PARRIED_M
             moreStunType = switch (direction) {
                 case LEFT_ATTACK, LEFT_SLIGHT_ATTACK, LEFT_SIDE -> MoreStunType.BE_PARRIED_R;
                 case RIGHT_ATTACK, RIGHT_SLIGHT_ATTACK, RIGHT_SIDE -> MoreStunType.BE_PARRIED_L;
@@ -301,6 +377,14 @@ public class MEFEntityAPI {
             return true;
         }
         return livingEntity.addEffect(new MobEffectInstance(MEFMobEffects.KNOCKDOWN.get(),100,0));
+    }
+
+    /**
+     * 获取实体的处决动作表
+     */
+    @Nullable
+    public static ExecutionAnimSet getExecutionAnimSet(LivingEntityPatch<?> patch) {
+        return MEFExecutionRegistry.getExecutionSet(patch.getOriginal());
     }
 
 }

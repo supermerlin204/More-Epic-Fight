@@ -1,6 +1,5 @@
 package org.merlin204.mef.client.gui;
 
-import net.minecraft.world.entity.Entity;
 import java.util.ArrayList;
 import java.util.List;
 

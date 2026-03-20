@@ -1,34 +1,20 @@
 package org.merlin204.mef.event;
 
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.CustomizeGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import org.joml.Matrix4f;
-import org.merlin204.mef.api.entity.MEFEntityAPI;
-import org.merlin204.mef.capability.MEFCapabilities;
-import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.client.gui.ExecuteIconRenderCommand;
 import org.merlin204.mef.client.gui.ExecuteIconRenderer;
 import org.merlin204.mef.client.gui.MEFBossBarManager;
 import org.merlin204.mef.client.render.MEFRenderTypes;
 import org.merlin204.mef.main.MoreEpicFightMod;
-import yesman.epicfight.client.ClientEngine;
-import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
-import yesman.epicfight.world.capabilities.EpicFightCapabilities;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
-import yesman.epicfight.world.damagesource.StunType;
 
 
 @Mod.EventBusSubscriber(modid = MoreEpicFightMod.MOD_ID, value = Dist.CLIENT)

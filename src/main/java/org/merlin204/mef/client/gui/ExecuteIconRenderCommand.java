@@ -1,7 +1,6 @@
 package org.merlin204.mef.client.gui;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 
 public class ExecuteIconRenderCommand {

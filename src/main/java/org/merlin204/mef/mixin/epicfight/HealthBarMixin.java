@@ -1,12 +1,10 @@
 package org.merlin204.mef.mixin.epicfight;
 
-
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
@@ -17,7 +15,6 @@ import org.merlin204.mef.client.gui.ExecuteIconRenderCommand;
 import org.merlin204.mef.client.gui.ExecuteIconRenderer;
 import org.merlin204.mef.client.render.MEFRenderTypes;
 import org.merlin204.mef.main.MoreEpicFightMod;
-import org.merlin204.mef.registry.MEFMobEffects;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,6 +26,8 @@ import yesman.epicfight.client.gui.HealthBar;
 import yesman.epicfight.client.world.capabilites.entitypatch.player.LocalPlayerPatch;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.damagesource.StunType;
+
+import java.util.Objects;
 
 import static yesman.epicfight.client.gui.EntityUI.drawUIAsLevelModel;
 
@@ -47,7 +46,7 @@ public class HealthBarMixin {
 
     @Inject(method = "shouldDraw", at = @At("HEAD"), remap = false, cancellable = true)
     public void mef$shouldDraw(LivingEntity entity, LivingEntityPatch<?> entityPatch, LocalPlayerPatch playerPatch, float partialTicks, CallbackInfoReturnable<Boolean> cir) {
-        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null && MEFEntityAPI.getStaminaTypeByEntity(entity).getBarRenderType() == StaminaType.BarRenderType.SMALL){
+        if (MEFEntityAPI.getStaminaTypeByEntity(entity) != null && Objects.requireNonNull(MEFEntityAPI.getStaminaTypeByEntity(entity)).getBarRenderType() == StaminaType.BarRenderType.SMALL){
             cir.setReturnValue(true);
             cir.cancel();
         }
@@ -59,15 +58,13 @@ public class HealthBarMixin {
             ci.cancel();
 
             float scale = 2F * entity.getBbWidth();
-
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entity);
 
-            //绘制处决图标
-            if (entity == playerPatch.getTarget() && MEFEntityAPI.canExecute(playerPatch) && entity.isAlive() || true){
+            if (entity.isAlive() && MEFEntityAPI.canBeExecute(entity)) {
                 float rio = mefEntity.getKnockdownTime() / 100F;
                 if (entityPatch != null && entityPatch.getHitAnimation(StunType.KNOCKDOWN) != null &&
-                        entityPatch.getAnimator().getPlayerFor(null).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)) {
-                    rio = entityPatch.getAnimator().getPlayerFor(null).getElapsedTime() / entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
+                        Objects.requireNonNull(entityPatch.getAnimator().getPlayerFor(null)).getRealAnimation() == entityPatch.getHitAnimation(StunType.KNOCKDOWN)) {
+                    rio = Objects.requireNonNull(entityPatch.getAnimator().getPlayerFor(null)).getElapsedTime() / entityPatch.getHitAnimation(StunType.KNOCKDOWN).get().getTotalTime();
                 }
                 rio = Mth.clamp(rio, 0F, 1F);
                 int step = (int) (59F * rio);
@@ -75,7 +72,6 @@ public class HealthBarMixin {
                 float scales = 2F * entity.getBbWidth();
                 float size = 0.2F * scales;
 
-                // 使用原有的矩阵计算方法（复用 EntityUI 的方法）
                 Matrix4f matrix = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
                         poseStack, entity, 0.0F, entity.getBbHeight() / 2, 0.0F, true, partialTicks
                 );
@@ -85,7 +81,6 @@ public class HealthBarMixin {
                 float minV = 0.0F;
                 float maxV = 1.0F;
 
-                // 创建渲染指令并添加
                 ExecuteIconRenderCommand cmd = new ExecuteIconRenderCommand(
                         matrix, EXECUTE,
                         -size, -size, size, size,
@@ -94,12 +89,11 @@ public class HealthBarMixin {
                 ExecuteIconRenderer.addCommand(cmd);
             }
 
-            if (mefEntity.getStaminaType().getBarRenderType() != StaminaType.BarRenderType.SMALL)return;
+            if (mefEntity.getStaminaType().getBarRenderType() != StaminaType.BarRenderType.SMALL) return;
 
             Matrix4f matrix = ((EntityUI) (Object) this).getModelViewMatrixAlignedToCamera(
                     poseStack, entity, 0.0F, entity.getBbHeight() + 0.5F, 0.0F, true, partialTicks
             );
-
 
             float maxHealth = entity.getMaxHealth();
             float health = entity.getHealth();
@@ -108,8 +102,6 @@ public class HealthBarMixin {
             float maxStamina = mefEntity.getStaminaMax();
             float stamina = mefEntity.getStamina();
             float staminaRatio = Mth.clamp(stamina / maxStamina, 0.0F, 1.0F);
-
-
 
             float bgWidth = 1.0f * scale;
             float bgHalf = bgWidth * 0.5f;
@@ -144,10 +136,8 @@ public class HealthBarMixin {
                         fgLeft, y1, fgRight, y2,
                         0.0F, 0.0F, staminaRatio, 1.0F);
             }
-
         }
     }
-
 
     @Unique
     private static void mef$draw(Matrix4f matrix, ResourceLocation textureLocation, MultiBufferSource buffer, float minX, float minY, float maxX, float maxY, float minU, float minV, float maxU, float maxV) {
@@ -158,7 +148,4 @@ public class HealthBarMixin {
         vertexConsumer.vertex(matrix, maxX, maxY, 0.0F).uv(maxU, minV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
         vertexConsumer.vertex(matrix, minX, maxY, 0.0F).uv(minU, minV).color(255, 255, 255, 255).normal(0.0F, 1.0F, 0.0F).endVertex();
     }
-
-
-
 }

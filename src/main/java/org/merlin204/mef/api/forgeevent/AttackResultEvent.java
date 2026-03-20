@@ -1,15 +1,10 @@
 package org.merlin204.mef.api.forgeevent;
 
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
-import org.merlin204.mef.api.stamina.StaminaType;
 import yesman.epicfight.api.utils.AttackResult;
-import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
-
-import java.util.Map;
 
 
 /**

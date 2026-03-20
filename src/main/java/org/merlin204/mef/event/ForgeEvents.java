@@ -3,19 +3,18 @@ package org.merlin204.mef.event;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.BossEvent;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.api.entity.MEFEntityAPI;
 import org.merlin204.mef.api.entity.MoreLivingMotions;
-import org.merlin204.mef.api.jar.EmbeddedJarCopier;
+import org.merlin204.mef.api.entity.MoreStunType;
 import org.merlin204.mef.api.network.PacketHandler;
 import org.merlin204.mef.api.network.PacketRelay;
 import org.merlin204.mef.api.network.packet.client.SyncBossBarPacket;
@@ -26,7 +25,11 @@ import org.merlin204.mef.client.gui.MEFBossBarManager;
 import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.model.armature.HumanoidArmature;
-import yesman.epicfight.world.entity.ai.attribute.EpicFightAttributes;
+import yesman.epicfight.world.capabilities.EpicFightCapabilities;
+import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.damagesource.EpicFightDamageSource;
+
+import java.util.Objects;
 
 import static org.merlin204.mef.epicfight.MEFAnimations.BIPED_WONDER_L;
 import static org.merlin204.mef.epicfight.MEFAnimations.BIPED_WONDER_R;
@@ -70,4 +73,41 @@ public class ForgeEvents {
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void onLivingDeath(LivingDeathEvent event) {
+        LivingEntity deadEntity = event.getEntity();
+        Entity attacker = event.getSource().getDirectEntity();
+        if (deadEntity.level().isClientSide) return;
+
+        if (attacker instanceof LivingEntity livingAttacker) {
+            LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(livingAttacker, LivingEntityPatch.class);
+            LivingEntityPatch<?> deadEntityPatch = EpicFightCapabilities.getEntityPatch(deadEntity, LivingEntityPatch.class);
+
+            if (attackerPatch != null && deadEntityPatch != null) {
+                var animatorPlayer = deadEntityPatch.getAnimator().getPlayerFor(null);
+                if (animatorPlayer == null) return;
+
+                var deadEntityAnim = animatorPlayer.getRealAnimation().get();
+
+                var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(deadEntityPatch, MoreStunType.BE_EXECUTED_START);
+
+                boolean isVictim = deadEntityAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false);
+
+                if (startAnimAccessor != null && deadEntityAnim.equals(startAnimAccessor.get()) && !isVictim) {
+                    event.setCanceled(true);
+                    deadEntity.setHealth(1.0F);
+                    return;
+                }
+
+                if (isVictim) {
+                    MEFEntity mefEntity = MEFCapabilities.getMEFEntity(deadEntity);
+                    if (!mefEntity.isDoomed()) {
+                        event.setCanceled(true);
+                        deadEntity.setHealth(1.0F);
+                        mefEntity.markDoomed(event.getSource());
+                    }
+                }
+            }
+        }
+    }
 }

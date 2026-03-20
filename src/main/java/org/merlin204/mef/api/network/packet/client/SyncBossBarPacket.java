@@ -5,7 +5,6 @@ import net.minecraft.world.entity.player.Player;
 import org.merlin204.mef.api.network.packet.BasePacket;
 import org.merlin204.mef.client.gui.MEFBossBarManager;
 
-
 import javax.annotation.Nullable;
 import java.util.UUID;
 

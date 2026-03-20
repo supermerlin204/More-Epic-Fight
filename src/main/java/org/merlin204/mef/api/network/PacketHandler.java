@@ -8,7 +8,6 @@ import org.merlin204.mef.api.network.packet.BasePacket;
 import org.merlin204.mef.api.network.packet.client.SyncBossBarPacket;
 import org.merlin204.mef.main.MoreEpicFightMod;
 
-
 import java.util.function.Function;
 
 public class PacketHandler {
