@@ -102,9 +102,11 @@ public class ForgeEvents {
                 if (isVictim) {
                     MEFEntity mefEntity = MEFCapabilities.getMEFEntity(deadEntity);
                     if (!mefEntity.isDoomed()) {
+                        System.out.println("Victim");
                         event.setCanceled(true);
                         deadEntity.setHealth(1.0F);
                         mefEntity.markDoomed(event.getSource());
+                        System.out.println(event.getSource());
                     }
                 }
             }

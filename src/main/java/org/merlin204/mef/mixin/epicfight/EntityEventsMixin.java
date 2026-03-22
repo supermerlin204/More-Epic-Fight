@@ -113,6 +113,8 @@ public class EntityEventsMixin {
                                 if (animSet != null && animSet.victimAnim() != null) {
                                     // ====== 单处决动画 ======
                                     if (!targetAnimation.equals(animSet.victimAnim().get())) {
+                                        //过一下EF的applyStun，判定为大硬直
+                                        hitEntityPatch.applyStun(StunType.LONG, 0);
                                         hitEntityPatch.playAnimationSynchronized(animSet.victimAnim(), 0);
                                     }
                                     successful = true;
@@ -120,8 +122,12 @@ public class EntityEventsMixin {
                                     // ====== BE_EXECUTED_START / END ======
                                     var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_START);
                                     if (startAnimAccessor != null && targetAnimation.equals(startAnimAccessor.get())){
+                                        //过一下EF的applyStun，判定为大硬直
+                                        hitEntityPatch.applyStun(StunType.LONG, 0);
                                         successful = MEFEntityAPI.playMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_END);
                                     } else {
+                                        //过一下EF的applyStun，判定为大硬直
+                                        hitEntityPatch.applyStun(StunType.LONG, 0);
                                         successful = MEFEntityAPI.playMoreStunAnimation(hitEntityPatch, MoreStunType.BE_EXECUTED_START);
                                     }
                                 }

@@ -12,8 +12,10 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
+/**
+ * 一般的被处决动画类
+ */
 public class MEFVictimAnimation extends LongHitAnimation implements IMEFAnimation<MEFVictimAnimation> {
-
 
     public MEFVictimAnimation(float transitionTime, AnimationAccessor<? extends LongHitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, accessor, armature);

@@ -20,6 +20,7 @@ import org.merlin204.mef.main.MoreEpicFightMod;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.AttackResult;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -38,76 +39,82 @@ public class ModEvents {
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void attackResultEvent(AttackResultEvent event) {
-        Entity causingEntity = event.getSource().getEntity();
-        LivingEntity hitEntity = event.getBeAttacked();
+        Entity attacker = event.getSource().getEntity();
+        LivingEntity target = event.getBeAttacked();
         DamageSource damageSource = event.getSource();
 
-        if (causingEntity == null || hitEntity == null) return;
+        if (attacker == null || target == null) return;
 
-        LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(causingEntity, LivingEntityPatch.class);
-        LivingEntityPatch<?> hitPatch = EpicFightCapabilities.getEntityPatch(hitEntity, LivingEntityPatch.class);
+        LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(attacker, LivingEntityPatch.class);
+        LivingEntityPatch<?> targetPatch = EpicFightCapabilities.getEntityPatch(target, LivingEntityPatch.class);
 
-        boolean isAttackerExecuting = false;
+        // 1. 攻击方是否正在处决（处决者状态）
+        boolean isAttackerPerformingExecution = false;
         if (attackerPatch != null) {
-            var attackerPlayer = attackerPatch.getAnimator().getPlayerFor(null);
-            if (attackerPlayer != null) {
-                var attackerAnim = attackerPlayer.getRealAnimation().get();
-                if (attackerAnim != null) {
-                    isAttackerExecuting = attackerAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
+            var attackerAnimPlayer = attackerPatch.getAnimator().getPlayerFor(null);
+            if (attackerAnimPlayer != null) {
+                var attackerCurrentAnim = attackerAnimPlayer.getRealAnimation().get();
+                if (attackerCurrentAnim != null) {
+                    isAttackerPerformingExecution = attackerCurrentAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
                 }
             }
         }
 
-        boolean isVictimDoingExecution = false;
-        boolean isVictimBeingExecuted = MEFEntityAPI.canBeExecute(hitEntity);
+        // 2. 受击方是否正在“处决别人”？（无敌帧）
+        boolean isTargetPerformingExecution = false;
 
-        if (hitPatch != null) {
-            var hitPlayer = hitPatch.getAnimator().getPlayerFor(null);
-            if (hitPlayer != null) {
-                var victimAnim = hitPlayer.getRealAnimation().get();
-                if (victimAnim != null) {
-                    isVictimDoingExecution = victimAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
+        // 3. 受击方是否正在“被处决”？（锁血，防止被抢怪）
+        boolean isTargetBeingExecuted = MEFEntityAPI.canBeExecute(target);
 
-                    var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(hitPatch, MoreStunType.BE_EXECUTED_START);
-                    boolean isPlayingVictimAnim = victimAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false) ||
-                            (startAnimAccessor != null && victimAnim.equals(startAnimAccessor.get()));
+        if (targetPatch != null) {
+            var targetAnimPlayer = targetPatch.getAnimator().getPlayerFor(null);
+            if (targetAnimPlayer != null) {
+                var targetCurrentAnim = targetAnimPlayer.getRealAnimation().get();
+                if (targetCurrentAnim != null) {
+                    // 受击方正在播放处决动画（正在处决别人）
+                    isTargetPerformingExecution = targetCurrentAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
 
-                    isVictimBeingExecuted = isVictimBeingExecuted || isPlayingVictimAnim;
+                    // 检查受击方是否正在播放“被处决”动画
+                    var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(targetPatch, MoreStunType.BE_EXECUTED_START);
+                    boolean isPlayingBeingExecutedAnim = targetCurrentAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false) ||
+                            (startAnimAccessor != null && targetCurrentAnim.equals(startAnimAccessor.get()));
+
+                    isTargetBeingExecuted = isTargetBeingExecuted || isPlayingBeingExecutedAnim;
                 }
             }
         }
 
-        if (isVictimDoingExecution) {
+        if (isTargetPerformingExecution) {
             event.setAttackResult(AttackResult.blocked(0.0F));
             return;
         }
 
-        if (isVictimBeingExecuted) {
-            if (!isAttackerExecuting) {
+        if (isTargetBeingExecuted) {
+            if (!isAttackerPerformingExecution) {
                 event.setAttackResult(AttackResult.blocked(0.0F));
                 return;
             }
         }
 
-        if (isAttackerExecuting) {
-            if (!isVictimBeingExecuted) {
+        if (isAttackerPerformingExecution) {
+            if (!isTargetBeingExecuted) {
                 event.setAttackResult(AttackResult.blocked(0.0F));
                 return;
             }
         }
 
-        if (hitPatch != null) {
-            var hitPlayer = hitPatch.getAnimator().getPlayerFor(null);
-            if (hitPlayer != null) {
-                var animation = hitPlayer.getRealAnimation().get();
-                float time = hitPlayer.getElapsedTime();
+        if (targetPatch != null) {
+            var targetAnimPlayer = targetPatch.getAnimator().getPlayerFor(null);
+            if (targetAnimPlayer != null) {
+                var targetCurrentAnim = targetAnimPlayer.getRealAnimation().get();
+                float time = targetAnimPlayer.getElapsedTime();
 
-                if (animation != null && animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
+                if (targetCurrentAnim != null && targetCurrentAnim.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
                     boolean successful = false;
 
-                    for (DefenseTimePair defenseTimePair : animation.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
-                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(hitPatch, causingEntity, damageSource)){
-                            defenseTimePair.defenseSuccess(hitPatch, causingEntity, damageSource);
+                    for (DefenseTimePair defenseTimePair : targetCurrentAnim.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
+                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(targetPatch, attacker, damageSource)){
+                            defenseTimePair.defenseSuccess(targetPatch, attacker, damageSource);
                             successful = true;
                         }
                     }
@@ -203,6 +210,12 @@ public class ModEvents {
         event.registerCategory(CapabilityItem.WeaponCategories.SPEAR, ONE_HAND_EXECUTE_HARD, null);
         event.registerCategory(CapabilityItem.WeaponCategories.GREATSWORD, ONE_HAND_EXECUTE_HARD, null);
 
+
+        //特定实体
+        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, EntityType.WITHER_SKELETON, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
+        //特定骨架
+        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, Armatures.CREEPER.get(), ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
+        //通用
         event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
     }
 

@@ -9,6 +9,9 @@ import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.model.Armature;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
+/**
+ * 分体处决动画类，用于拆开的二段式处决动画，需要注册为MoreStunType内BE_EXECUTED_START和BE_EXECUTED_END的硬直动画
+ */
 public class MEFBeExecutedAnimation extends LongHitAnimation {
 
     public MEFBeExecutedAnimation(float transitionTime, AnimationManager.AnimationAccessor<? extends LongHitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
