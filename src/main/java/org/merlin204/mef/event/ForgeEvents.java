@@ -27,9 +27,6 @@ import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
-import yesman.epicfight.world.damagesource.EpicFightDamageSource;
-
-import java.util.Objects;
 
 import static org.merlin204.mef.epicfight.MEFAnimations.BIPED_WONDER_L;
 import static org.merlin204.mef.epicfight.MEFAnimations.BIPED_WONDER_R;
@@ -102,11 +99,9 @@ public class ForgeEvents {
                 if (isVictim) {
                     MEFEntity mefEntity = MEFCapabilities.getMEFEntity(deadEntity);
                     if (!mefEntity.isDoomed()) {
-                        System.out.println("Victim");
                         event.setCanceled(true);
                         deadEntity.setHealth(1.0F);
                         mefEntity.markDoomed(event.getSource());
-                        System.out.println(event.getSource());
                     }
                 }
             }

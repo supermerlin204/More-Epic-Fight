@@ -195,13 +195,9 @@ public class ModEvents {
     public static void ExecuteAnimationRegistryEvent(ExecuteAnimationRegistryEvent event) {
         event.registerCategory(CapabilityItem.WeaponCategories.NOT_WEAPON, FIST_EXECUTE, null);
         event.registerCategory(CapabilityItem.WeaponCategories.FIST, FIST_EXECUTE, null);
-        event.registerCategory(CapabilityItem.WeaponCategories.LONGSWORD, ONE_HAND_EXECUTE, null);
 
         event.registerCategory(CapabilityItem.WeaponCategories.DAGGER, ONE_HAND_EXECUTE, null);
-        event.registerCategory(CapabilityItem.WeaponCategories.SWORD, ONE_HAND_EXECUTE, null);
-        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ONE_HAND_EXECUTE, null);
         event.registerCategory(CapabilityItem.WeaponCategories.TRIDENT, ONE_HAND_EXECUTE, null);
-        event.registerCategory(CapabilityItem.WeaponCategories.UCHIGATANA, ONE_HAND_EXECUTE, null);
 
         event.registerCategory(CapabilityItem.WeaponCategories.SHOVEL, ONE_HAND_EXECUTE_HARD, null);
         event.registerCategory(CapabilityItem.WeaponCategories.AXE, ONE_HAND_EXECUTE_HARD, null);
@@ -210,13 +206,11 @@ public class ModEvents {
         event.registerCategory(CapabilityItem.WeaponCategories.SPEAR, ONE_HAND_EXECUTE_HARD, null);
         event.registerCategory(CapabilityItem.WeaponCategories.GREATSWORD, ONE_HAND_EXECUTE_HARD, null);
 
-
-        //特定实体
-        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, EntityType.WITHER_SKELETON, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
-        //特定骨架
-        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, Armatures.CREEPER.get(), ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
         //通用
+        event.registerCategory(CapabilityItem.WeaponCategories.SWORD, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
+        event.registerCategory(CapabilityItem.WeaponCategories.UCHIGATANA, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
         event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
+        event.registerCategory(CapabilityItem.WeaponCategories.LONGSWORD, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
     }
 
     @SubscribeEvent

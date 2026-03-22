@@ -1,4 +1,3 @@
-// file_name: MEFEntityAPI.java
 package org.merlin204.mef.api.entity;
 
 import com.google.common.collect.Maps;
