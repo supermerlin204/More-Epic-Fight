@@ -213,7 +213,7 @@ public class MEFEntityAPI {
      * 动画选取优先级顺序为主手物品类-主手武器类型-副手物品类-副手武器类型
      */
     public static boolean tryPlayExecuteAnimation(LivingEntityPatch<?> attacker, @Nullable LivingEntityPatch<?> victim) {
-        ExecutionAnimSet animSet = getExecutionAnimSet(attacker);
+        ExecutionAnimSet animSet = getExecutionAnimSet(attacker, victim);
 
         if (animSet != null) {
             if (victim != null) {
@@ -384,7 +384,15 @@ public class MEFEntityAPI {
      */
     @Nullable
     public static ExecutionAnimSet getExecutionAnimSet(LivingEntityPatch<?> patch) {
-        return MEFExecutionRegistry.getExecutionSet(patch.getOriginal());
+        return getExecutionAnimSet(patch, null);
+    }
+
+    /**
+     * 获取实体的处决动作表 (全新匹配逻辑)
+     */
+    @Nullable
+    public static ExecutionAnimSet getExecutionAnimSet(LivingEntityPatch<?> attacker, @Nullable LivingEntityPatch<?> victim) {
+        return MEFExecutionRegistry.getExecutionSet(attacker, victim);
     }
 
 }
