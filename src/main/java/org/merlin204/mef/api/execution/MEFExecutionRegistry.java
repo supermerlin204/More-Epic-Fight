@@ -45,32 +45,29 @@ public class MEFExecutionRegistry {
         EntityType<?> victimType = victimPatch != null ? victimPatch.getOriginal().getType() : null;
         Armature victimArmature = victimPatch != null ? victimPatch.getArmature() : null;
 
-        //实体匹配
-        if (victimType != null && CLASS_ENTITY.containsKey(mainClass) && CLASS_ENTITY.get(mainClass).containsKey(victimType)) {
-            return CLASS_ENTITY.get(mainClass).get(victimType);
+        if (victimType != null) {
+            if (CLASS_ENTITY.containsKey(mainClass) && CLASS_ENTITY.get(mainClass).containsKey(victimType)) {
+                return CLASS_ENTITY.get(mainClass).get(victimType);
+            }
+            if (category != null && CATEGORY_ENTITY.containsKey(category) && CATEGORY_ENTITY.get(category).containsKey(victimType)) {
+                return CATEGORY_ENTITY.get(category).get(victimType);
+            }
         }
-        //骨架匹配
-        if (victimArmature != null && CLASS_ARMATURE.containsKey(mainClass) && CLASS_ARMATURE.get(mainClass).containsKey(victimArmature)) {
-            return CLASS_ARMATURE.get(mainClass).get(victimArmature);
+
+        if (victimArmature != null) {
+            if (CLASS_ARMATURE.containsKey(mainClass) && CLASS_ARMATURE.get(mainClass).containsKey(victimArmature)) {
+                return CLASS_ARMATURE.get(mainClass).get(victimArmature);
+            }
+            if (category != null && CATEGORY_ARMATURE.containsKey(category) && CATEGORY_ARMATURE.get(category).containsKey(victimArmature)) {
+                return CATEGORY_ARMATURE.get(category).get(victimArmature);
+            }
         }
-        //通用匹配
+
         if (CLASS_GENERIC.containsKey(mainClass)) {
             return CLASS_GENERIC.get(mainClass);
         }
-
-        if (category != null) {
-            //实体匹配
-            if (victimType != null && CATEGORY_ENTITY.containsKey(category) && CATEGORY_ENTITY.get(category).containsKey(victimType)) {
-                return CATEGORY_ENTITY.get(category).get(victimType);
-            }
-            //骨架匹配
-            if (victimArmature != null && CATEGORY_ARMATURE.containsKey(category) && CATEGORY_ARMATURE.get(category).containsKey(victimArmature)) {
-                return CATEGORY_ARMATURE.get(category).get(victimArmature);
-            }
-            //通用匹配
-            if (CATEGORY_GENERIC.containsKey(category)) {
-                return CATEGORY_GENERIC.get(category);
-            }
+        if (category != null && CATEGORY_GENERIC.containsKey(category)) {
+            return CATEGORY_GENERIC.get(category);
         }
 
         return null;
