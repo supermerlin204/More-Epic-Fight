@@ -23,6 +23,8 @@ import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.damagesource.EpicFightDamageSource;
+import yesman.epicfight.world.damagesource.StunType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,81 +49,90 @@ public class ModEvents {
         LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(attacker, LivingEntityPatch.class);
         LivingEntityPatch<?> targetPatch = EpicFightCapabilities.getEntityPatch(target, LivingEntityPatch.class);
 
-        // 1. 攻击方是否正在处决（处决者状态）
-        boolean isAttackerPerformingExecution = false;
-        if (attackerPatch != null) {
-            var attackerAnimPlayer = attackerPatch.getAnimator().getPlayerFor(null);
-            if (attackerAnimPlayer != null) {
-                var attackerCurrentAnim = attackerAnimPlayer.getRealAnimation().get();
-                if (attackerCurrentAnim != null) {
-                    isAttackerPerformingExecution = attackerCurrentAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
-                }
-            }
-        }
-
-        // 2. 受击方是否正在“处决别人”？（无敌帧）
-        boolean isTargetPerformingExecution = false;
-
-        // 3. 受击方是否正在“被处决”？（锁血，防止被抢怪）
-        boolean isTargetBeingExecuted = MEFEntityAPI.canBeExecute(target);
-
-        if (targetPatch != null) {
-            var targetAnimPlayer = targetPatch.getAnimator().getPlayerFor(null);
-            if (targetAnimPlayer != null) {
-                var targetCurrentAnim = targetAnimPlayer.getRealAnimation().get();
-                if (targetCurrentAnim != null) {
-                    // 受击方正在播放处决动画（正在处决别人）
-                    isTargetPerformingExecution = targetCurrentAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
-
-                    // 检查受击方是否正在播放“被处决”动画
-                    var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(targetPatch, MoreStunType.BE_EXECUTED_START);
-                    boolean isPlayingBeingExecutedAnim = targetCurrentAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false) ||
-                            (startAnimAccessor != null && targetCurrentAnim.equals(startAnimAccessor.get()));
-
-                    isTargetBeingExecuted = isTargetBeingExecuted || isPlayingBeingExecutedAnim;
-                }
-            }
-        }
-
-        if (isTargetPerformingExecution) {
-            event.setAttackResult(AttackResult.blocked(0.0F));
-            return;
-        }
-
-        if (isTargetBeingExecuted) {
-            if (!isAttackerPerformingExecution) {
-                event.setAttackResult(AttackResult.blocked(0.0F));
-                return;
-            }
-        }
-
-        if (isAttackerPerformingExecution) {
-            if (!isTargetBeingExecuted) {
-                event.setAttackResult(AttackResult.blocked(0.0F));
-                return;
-            }
-        }
-
-        if (targetPatch != null) {
-            var targetAnimPlayer = targetPatch.getAnimator().getPlayerFor(null);
-            if (targetAnimPlayer != null) {
-                var targetCurrentAnim = targetAnimPlayer.getRealAnimation().get();
-                float time = targetAnimPlayer.getElapsedTime();
-
-                if (targetCurrentAnim != null && targetCurrentAnim.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()){
-                    boolean successful = false;
-
-                    for (DefenseTimePair defenseTimePair : targetCurrentAnim.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()){
-                        if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(targetPatch, attacker, damageSource)){
-                            defenseTimePair.defenseSuccess(targetPatch, attacker, damageSource);
-                            successful = true;
-                        }
+        if(damageSource instanceof EpicFightDamageSource epicFightDamageSource) {
+            // 1. 攻击方是否正在处决（处决者状态）
+            boolean isAttackerPerformingExecution = false;
+            if (attackerPatch != null) {
+                var attackerAnimPlayer = attackerPatch.getAnimator().getPlayerFor(null);
+                if (attackerAnimPlayer != null) {
+                    var attackerCurrentAnim = attackerAnimPlayer.getRealAnimation().get();
+                    if (attackerCurrentAnim != null) {
+                        isAttackerPerformingExecution = attackerCurrentAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
                     }
+                }
+            }
 
-                    if (successful){
-                        event.setAttackResult(AttackResult.blocked(event.getDamage()));
-                        if (attackerPatch != null) {
-                            attackerPatch.setLastAttackResult(AttackResult.blocked(event.getDamage()));
+            // 2. 受击方是否正在“处决别人”
+            boolean isTargetPerformingExecution = false;
+
+            // 3. 受击方是否处于“倒地可处决状态”
+            boolean isTargetKnockedDown = MEFEntityAPI.canBeExecute(target);
+
+            // 4. 受击方是否“正在播放被处决动画”
+            boolean isTargetPlayingVictimAnim = false;
+
+            if (targetPatch != null) {
+                var targetAnimPlayer = targetPatch.getAnimator().getPlayerFor(null);
+                if (targetAnimPlayer != null) {
+                    var targetCurrentAnim = targetAnimPlayer.getRealAnimation().get();
+                    if (targetCurrentAnim != null) {
+                        // 受击方正在播放处决动画（正在处决别人）
+                        isTargetPerformingExecution = targetCurrentAnim.getProperty(MEFAnimationProperty.IS_EXECUTE_ANIMATION).orElse(false);
+
+                        // 检查受击方是否正在播放“被处决”动画
+                        var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(targetPatch, MoreStunType.BE_EXECUTED_START);
+                        isTargetPlayingVictimAnim = targetCurrentAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false) ||
+                                (startAnimAccessor != null && targetCurrentAnim.equals(startAnimAccessor.get()));
+                    }
+                }
+            }
+
+            if (isTargetPerformingExecution) {
+                event.setAttackResult(AttackResult.blocked(0.0F));
+                return;
+            }
+
+            if (isAttackerPerformingExecution) {
+                if (!isTargetKnockedDown && !isTargetPlayingVictimAnim) {
+                    event.setAttackResult(AttackResult.blocked(0.0F));
+                    return;
+                }
+            }
+
+            if (isTargetPlayingVictimAnim) {
+                if (!isAttackerPerformingExecution) {
+                    event.setAttackResult(AttackResult.blocked(0.0F));
+                    return;
+                }
+            }
+
+            if (isTargetKnockedDown && !isTargetPlayingVictimAnim) {
+                if (!isAttackerPerformingExecution) {
+                    epicFightDamageSource.setStunType(StunType.NONE);
+                }
+            }
+
+            if (targetPatch != null) {
+                var targetAnimPlayer = targetPatch.getAnimator().getPlayerFor(null);
+                if (targetAnimPlayer != null) {
+                    var targetCurrentAnim = targetAnimPlayer.getRealAnimation().get();
+                    float time = targetAnimPlayer.getElapsedTime();
+
+                    if (targetCurrentAnim != null && targetCurrentAnim.getProperty(MEFAnimationProperty.DEFENSE_TIME).isPresent()) {
+                        boolean successful = false;
+
+                        for (DefenseTimePair defenseTimePair : targetCurrentAnim.getProperty(MEFAnimationProperty.DEFENSE_TIME).get()) {
+                            if (defenseTimePair.isTimeIn(time) && defenseTimePair.canDefense(targetPatch, attacker, damageSource)) {
+                                defenseTimePair.defenseSuccess(targetPatch, attacker, damageSource);
+                                successful = true;
+                            }
+                        }
+
+                        if (successful) {
+                            event.setAttackResult(AttackResult.blocked(event.getDamage()));
+                            if (attackerPatch != null) {
+                                attackerPatch.setLastAttackResult(AttackResult.blocked(event.getDamage()));
+                            }
                         }
                     }
                 }

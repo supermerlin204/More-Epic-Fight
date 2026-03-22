@@ -108,7 +108,7 @@ public class EntityEventsMixin {
                                 StaticAnimation targetAnimation = hitPlayer.getRealAnimation().get();
 
                                 // 获取当前武器的处决动作表】
-                                ExecutionAnimSet animSet = MEFEntityAPI.getExecutionAnimSet(attackerEntityPatch);
+                                ExecutionAnimSet animSet = MEFEntityAPI.getExecutionAnimSet(attackerEntityPatch, hitEntityPatch);
 
                                 if (animSet != null && animSet.victimAnim() != null) {
                                     // ====== 单处决动画 ======

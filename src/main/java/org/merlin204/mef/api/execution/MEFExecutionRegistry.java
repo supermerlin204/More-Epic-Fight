@@ -25,11 +25,15 @@ public class MEFExecutionRegistry {
     private static final Map<WeaponCategory, Map<EntityType<?>, ExecutionAnimSet>> CATEGORY_ENTITY = Maps.newHashMap();
     private static final Map<Class<? extends Item>, Map<EntityType<?>, ExecutionAnimSet>> CLASS_ENTITY = Maps.newHashMap();
 
+    private static final Map<Armature, ExecutionAnimSet> GLOBAL_ARMATURE = Maps.newHashMap();
+    private static final Map<EntityType<?>, ExecutionAnimSet> GLOBAL_ENTITY = Maps.newHashMap();
+
     public static void fireRegistryEvent() {
         ExecuteAnimationRegistryEvent event = new ExecuteAnimationRegistryEvent(
                 CATEGORY_GENERIC, CLASS_GENERIC,
                 CATEGORY_ARMATURE, CLASS_ARMATURE,
-                CATEGORY_ENTITY, CLASS_ENTITY
+                CATEGORY_ENTITY, CLASS_ENTITY,
+                GLOBAL_ARMATURE, GLOBAL_ENTITY
         );
         ModLoader.get().postEvent(event);
     }
@@ -45,6 +49,7 @@ public class MEFExecutionRegistry {
         EntityType<?> victimType = victimPatch != null ? victimPatch.getOriginal().getType() : null;
         Armature victimArmature = victimPatch != null ? victimPatch.getArmature() : null;
 
+        // 【优先级 1】完全匹配：特定实体
         if (victimType != null) {
             if (CLASS_ENTITY.containsKey(mainClass) && CLASS_ENTITY.get(mainClass).containsKey(victimType)) {
                 return CLASS_ENTITY.get(mainClass).get(victimType);
@@ -52,8 +57,13 @@ public class MEFExecutionRegistry {
             if (category != null && CATEGORY_ENTITY.containsKey(category) && CATEGORY_ENTITY.get(category).containsKey(victimType)) {
                 return CATEGORY_ENTITY.get(category).get(victimType);
             }
+            // 【优先级 2】全局实体：不管拿什么武器，只要是这个实体就播这个
+            if (GLOBAL_ENTITY.containsKey(victimType)) {
+                return GLOBAL_ENTITY.get(victimType);
+            }
         }
 
+        // 【优先级 3】次级匹配：特定骨架
         if (victimArmature != null) {
             if (CLASS_ARMATURE.containsKey(mainClass) && CLASS_ARMATURE.get(mainClass).containsKey(victimArmature)) {
                 return CLASS_ARMATURE.get(mainClass).get(victimArmature);
@@ -61,8 +71,13 @@ public class MEFExecutionRegistry {
             if (category != null && CATEGORY_ARMATURE.containsKey(category) && CATEGORY_ARMATURE.get(category).containsKey(victimArmature)) {
                 return CATEGORY_ARMATURE.get(category).get(victimArmature);
             }
+            // 【优先级 4】全局骨架：不管拿什么武器，只要是这个骨架就播这个
+            if (GLOBAL_ARMATURE.containsKey(victimArmature)) {
+                return GLOBAL_ARMATURE.get(victimArmature);
+            }
         }
 
+        // 【优先级 5】通用匹配：只看武器，无视受击者是谁
         if (CLASS_GENERIC.containsKey(mainClass)) {
             return CLASS_GENERIC.get(mainClass);
         }

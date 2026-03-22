@@ -23,10 +23,12 @@ import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import org.merlin204.mef.client.gui.MEFBossBarManager;
 import org.merlin204.mef.main.MoreEpicFightMod;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.forgeevent.InitAnimatorEvent;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.damagesource.EpicFightDamageSource;
 
 import static org.merlin204.mef.epicfight.MEFAnimations.BIPED_WONDER_L;
 import static org.merlin204.mef.epicfight.MEFAnimations.BIPED_WONDER_R;
@@ -76,32 +78,37 @@ public class ForgeEvents {
         Entity attacker = event.getSource().getDirectEntity();
         if (deadEntity.level().isClientSide) return;
 
-        if (attacker instanceof LivingEntity livingAttacker) {
+        if (attacker instanceof LivingEntity livingAttacker && event.getSource() instanceof EpicFightDamageSource epicFightDamageSource) {
             LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getEntityPatch(livingAttacker, LivingEntityPatch.class);
             LivingEntityPatch<?> deadEntityPatch = EpicFightCapabilities.getEntityPatch(deadEntity, LivingEntityPatch.class);
 
             if (attackerPatch != null && deadEntityPatch != null) {
-                var animatorPlayer = deadEntityPatch.getAnimator().getPlayerFor(null);
-                if (animatorPlayer == null) return;
+                var deadEntityAnimatorPlayer = deadEntityPatch.getAnimator().getPlayerFor(null);
+                var attackerAnimatorPlayer = attackerPatch.getAnimator().getPlayerFor(null);
+                if (deadEntityAnimatorPlayer == null) return;
+                if (attackerAnimatorPlayer == null) return;
 
-                var deadEntityAnim = animatorPlayer.getRealAnimation().get();
+                var deadEntityAnim = deadEntityAnimatorPlayer.getRealAnimation().get();
 
                 var startAnimAccessor = MEFEntityAPI.getMoreStunAnimation(deadEntityPatch, MoreStunType.BE_EXECUTED_START);
 
                 boolean isVictim = deadEntityAnim.getProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION).orElse(false);
 
-                if (startAnimAccessor != null && deadEntityAnim.equals(startAnimAccessor.get()) && !isVictim) {
-                    event.setCanceled(true);
-                    deadEntity.setHealth(1.0F);
-                    return;
-                }
-
-                if (isVictim) {
-                    MEFEntity mefEntity = MEFCapabilities.getMEFEntity(deadEntity);
-                    if (!mefEntity.isDoomed()) {
+                if (epicFightDamageSource.getAnimation().get() instanceof AttackAnimation attackAnimation) {
+                    int phase = attackAnimation.getPhaseOrderByTime(attackerAnimatorPlayer.getElapsedTime());
+                    if (startAnimAccessor != null && deadEntityAnim.equals(startAnimAccessor.get()) && !isVictim) {
                         event.setCanceled(true);
                         deadEntity.setHealth(1.0F);
-                        mefEntity.markDoomed(event.getSource());
+                        return;
+                    }
+
+                    if (isVictim && phase == 0) {
+                        MEFEntity mefEntity = MEFCapabilities.getMEFEntity(deadEntity);
+                        if (!mefEntity.isDoomed()) {
+                            event.setCanceled(true);
+                            deadEntity.setHealth(1.0F);
+                            mefEntity.markDoomed(event.getSource());
+                        }
                     }
                 }
             }

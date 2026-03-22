@@ -1,11 +1,11 @@
 package org.merlin204.mef.api.animation.type;
 
-import net.minecraft.world.damagesource.DamageSource;
 import org.merlin204.mef.api.animation.IMEFAnimation;
 import org.merlin204.mef.api.animation.property.MEFAnimationProperty;
 import org.merlin204.mef.capability.MEFCapabilities;
 import org.merlin204.mef.capability.MEFEntity;
 import yesman.epicfight.api.animation.AnimationManager.AnimationAccessor;
+import yesman.epicfight.api.animation.property.AnimationProperty;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.LongHitAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
@@ -19,13 +19,11 @@ public class MEFVictimAnimation extends LongHitAnimation implements IMEFAnimatio
 
     public MEFVictimAnimation(float transitionTime, AnimationAccessor<? extends LongHitAnimation> accessor, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, accessor, armature);
-
         this.addProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION, true);
     }
 
     public MEFVictimAnimation(float transitionTime, String path, AssetAccessor<? extends Armature> armature) {
         super(transitionTime, path, armature);
-
         this.addProperty(MEFAnimationProperty.IS_VICTIM_ANIMATION, true);
     }
 
@@ -56,17 +54,7 @@ public class MEFVictimAnimation extends LongHitAnimation implements IMEFAnimatio
             mefEntity.setBeingExecuted(false);
 
             if (!livingEntityPatch.isLogicalClient()) {
-                if (mefEntity.isDoomed()) {
-                    DamageSource executionSource = mefEntity.getExecutionDamageSource();
-
-                    if (executionSource == null) {
-                        executionSource = livingEntityPatch.getOriginal().damageSources().generic();
-                    }
-
-                    livingEntityPatch.getOriginal().hurt(executionSource, Float.MAX_VALUE);
-
-                    mefEntity.clearDoomed();
-                }
+                mefEntity.clearDoomed();
             }
         }
     }
