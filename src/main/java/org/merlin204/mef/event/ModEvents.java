@@ -4,6 +4,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -217,10 +218,10 @@ public class ModEvents {
         event.registerCategory(CapabilityItem.WeaponCategories.GREATSWORD, ONE_HAND_EXECUTE_HARD, null);
 
         //通用
-        event.registerCategory(CapabilityItem.WeaponCategories.SWORD, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
-        event.registerCategory(CapabilityItem.WeaponCategories.UCHIGATANA, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
-        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
-        event.registerCategory(CapabilityItem.WeaponCategories.LONGSWORD, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED);
+        event.registerCategory(CapabilityItem.WeaponCategories.SWORD, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED, new Vec3(0.1D, 0.0D, 1.15D));
+        event.registerCategory(CapabilityItem.WeaponCategories.UCHIGATANA, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED, new Vec3(0.1D, 0.0D, 1.15D));
+        event.registerCategory(CapabilityItem.WeaponCategories.TACHI, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED, new Vec3(0.1D, 0.0D, 1.15D));
+        event.registerCategory(CapabilityItem.WeaponCategories.LONGSWORD, ARES_BIPED_COMMON_EXECUTE, ARES_BIPED_BE_EXECUTED, new Vec3(0.1D, 0.0D, 1.15D));
     }
 
     @SubscribeEvent

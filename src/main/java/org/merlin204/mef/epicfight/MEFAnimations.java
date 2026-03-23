@@ -59,31 +59,31 @@ public class MEFAnimations {
         BIPED_BE_EXECUTED_END = builder.nextAccessor("biped/be_executed_end", accessor -> new MEFBeExecutedAnimation(0.15F, accessor, Armatures.BIPED));
         ARES_BIPED_BE_EXECUTED = builder.nextAccessor("biped/ares_biped_be_executed", accessor -> new MEFVictimAnimation(0.15F, accessor, Armatures.BIPED));
 
-        FIST_EXECUTE = builder.nextAccessor("player/fist_execute", accessor -> new MEFExecuteAttackAnimation(0.15F, accessor, Armatures.BIPED,
+        FIST_EXECUTE = builder.nextAccessor("player/fist_execute", accessor -> new MEFExecuteAttackAnimation(0.15F, 0, 35/60F, accessor, Armatures.BIPED,
                 new AttackAnimation.Phase(0,35/60F,35/60F,40/60F, 40/60F, 100/60F, InteractionHand.OFF_HAND,Armatures.BIPED.get().toolL, ColliderPreset.FIST)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get()),
                 new AttackAnimation.Phase(0,100/60F,100/60F,110/60F, 140/60F, Float.MAX_VALUE, InteractionHand.OFF_HAND,Armatures.BIPED.get().toolL, ColliderPreset.FIST)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get())
         ));
 
-        ONE_HAND_EXECUTE = builder.nextAccessor("player/one_hand_execute", accessor -> new MEFExecuteAttackAnimation(0.15F, accessor, Armatures.BIPED,
+        ONE_HAND_EXECUTE = builder.nextAccessor("player/one_hand_execute", accessor -> new MEFExecuteAttackAnimation(0.15F, 0, 55/60F, accessor, Armatures.BIPED,
                 new AttackAnimation.Phase(0,55/60F,55/60F,60/60F, 60/60F, 130/60F, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR, null)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get()),
                 new AttackAnimation.Phase(0,130/60F,130/60F,140/60F, 180/60F, Float.MAX_VALUE, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR,null)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get())
         ));
 
-        ONE_HAND_EXECUTE_HARD = builder.nextAccessor("player/one_hand_execute_hard", accessor -> new MEFExecuteAttackAnimation(0.15F, accessor, Armatures.BIPED,
+        ONE_HAND_EXECUTE_HARD = builder.nextAccessor("player/one_hand_execute_hard", accessor -> new MEFExecuteAttackAnimation(0.15F, 0, 60/60F, accessor, Armatures.BIPED,
                 new AttackAnimation.Phase(0,60/60F,60/60F,70/60F, 70/60F, 150/60F, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR, null)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get()),
                 new AttackAnimation.Phase(0,150/60F,150/60F,160/60F, 230/60F, Float.MAX_VALUE, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR,null)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get())
         ));
 
-        ARES_BIPED_COMMON_EXECUTE = builder.nextAccessor("biped/ares_biped_common_execute", accessor -> new MEFExecuteAttackAnimation(0.15F, accessor, Armatures.BIPED,
+        ARES_BIPED_COMMON_EXECUTE = builder.nextAccessor("biped/ares_biped_common_execute", accessor -> new MEFExecuteAttackAnimation(0.15F, 0, 45/60F, accessor, Armatures.BIPED,
                 new AttackAnimation.Phase(0,45/60F,45/60F,55/60F, 190/60F, 190/60F, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR, null)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get()),
-                new AttackAnimation.Phase(190,195/60F,195/60F,205/60F, 250/60F, Float.MAX_VALUE, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR,null)
+                new AttackAnimation.Phase(0,195/60F,195/60F,205/60F, 250/60F, Float.MAX_VALUE, InteractionHand.MAIN_HAND,Armatures.BIPED.get().toolR,null)
                         .addProperty(AnimationProperty.AttackPhaseProperty.HIT_SOUND,EpicFightSounds.BLADE_RUSH_FINISHER.get())
         ));
 

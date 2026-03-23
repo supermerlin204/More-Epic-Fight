@@ -12,6 +12,7 @@
     "epicfight.LivingEntityPatchMixin",
     "epicfight.MobPatchMixin",
     "epicfight.StaticAnimationMixin",
+    "epicfight.client.MixinEpicFightCameraAPI",
     "minecraft.AttachCapabilitiesEventMixin",
     "minecraft.EntityMixin",
     "minecraft.LivingEntityMixin"

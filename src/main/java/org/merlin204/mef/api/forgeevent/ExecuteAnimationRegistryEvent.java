@@ -3,6 +3,7 @@ package org.merlin204.mef.api.forgeevent;
 import com.google.common.collect.Maps;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.fml.event.IModBusEvent;
 import org.merlin204.mef.api.execution.ExecutionAnimSet;
@@ -100,5 +101,61 @@ public class ExecuteAnimationRegistryEvent extends Event implements IModBusEvent
                                AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
                                AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim) {
         this.globalEntityMap.put(victimType, new ExecutionAnimSet(attackerAnim, victimAnim));
+    }
+
+    public void registerCategory(WeaponCategory category,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                                 Vec3 offset) {
+        this.categoryGenericMap.put(category, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerItemClass(Class<? extends Item> itemClass,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                                  Vec3 offset) {
+        this.classGenericMap.put(itemClass, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerCategory(WeaponCategory category, Armature victimArmature,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                                 Vec3 offset) {
+        this.categoryArmatureMap.computeIfAbsent(category, k -> Maps.newHashMap()).put(victimArmature, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerItemClass(Class<? extends Item> itemClass, Armature victimArmature,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                                  Vec3 offset) {
+        this.classArmatureMap.computeIfAbsent(itemClass, k -> Maps.newHashMap()).put(victimArmature, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerCategory(WeaponCategory category, EntityType<?> victimType,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                 AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                                 Vec3 offset) {
+        this.categoryEntityMap.computeIfAbsent(category, k -> Maps.newHashMap()).put(victimType, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerItemClass(Class<? extends Item> itemClass, EntityType<?> victimType,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                                  AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                                  Vec3 offset) {
+        this.classEntityMap.computeIfAbsent(itemClass, k -> Maps.newHashMap()).put(victimType, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerGlobal(Armature victimArmature,
+                               AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                               AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                               Vec3 offset) {
+        this.globalArmatureMap.put(victimArmature, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
+    }
+
+    public void registerGlobal(EntityType<?> victimType,
+                               AnimationManager.AnimationAccessor<? extends StaticAnimation> attackerAnim,
+                               AnimationManager.AnimationAccessor<? extends StaticAnimation> victimAnim,
+                               Vec3 offset) {
+        this.globalEntityMap.put(victimType, new ExecutionAnimSet(attackerAnim, victimAnim, offset));
     }
 }

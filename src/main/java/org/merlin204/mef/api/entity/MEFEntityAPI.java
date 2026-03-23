@@ -216,7 +216,7 @@ public class MEFEntityAPI {
 
         if (animSet != null) {
             if (victim != null) {
-                correctExecutionPosition(attacker.getOriginal(), victim.getOriginal());
+                correctExecutionPosition(attacker.getOriginal(), victim.getOriginal(), animSet.customOffset());
 
                 if (animSet.victimAnim() != null) {
                     victim.playAnimationSynchronized(animSet.victimAnim(), 0);
@@ -236,49 +236,69 @@ public class MEFEntityAPI {
     /**
      * 处决位置朝向修正
      */
-    public static void correctExecutionPosition(LivingEntity aEnt, LivingEntity vEnt) {
-        Vec3 dir = vEnt.position().subtract(aEnt.position()).multiply(1, 0, 1);
+    public static void correctExecutionPosition(LivingEntity attacker, LivingEntity victim, @Nullable Vec3 customOffset) {
+        Vec3 dir = victim.position().subtract(attacker.position()).multiply(1, 0, 1);
         if (dir.lengthSqr() > 0.0001) {
             dir = dir.normalize();
         } else {
-            dir = Vec3.directionFromRotation(0, aEnt.getYRot()).multiply(1, 0, 1).normalize();
+            dir = Vec3.directionFromRotation(0, attacker.getYRot()).multiply(1, 0, 1).normalize();
         }
 
-        double optimalDist = (aEnt.getBbWidth() + vEnt.getBbWidth()) / 2.0 + 0.5;
-        double minDist = (aEnt.getBbWidth() + vEnt.getBbWidth()) / 2.0;
-
         boolean foundSafePos = false;
-        Vec3 safePos = aEnt.position();
+        Vec3 safePos = attacker.position();
 
-        for (double d = optimalDist; d >= minDist; d -= 0.2) {
-            Vec3 testPos = vEnt.position().subtract(dir.scale(d));
-            testPos = new Vec3(testPos.x, aEnt.getY(), testPos.z);
+        if (customOffset != null) {
+            Vec3 leftDir = new Vec3(dir.z, 0, -dir.x);
 
-            AABB testBox = aEnt.getBoundingBox().move(testPos.x - aEnt.getX(), 0, testPos.z - aEnt.getZ());
+            Vec3 idealPos = victim.position()
+                    .subtract(dir.scale(customOffset.z))
+                    .add(leftDir.scale(customOffset.x))
+                    .add(0, customOffset.y, 0);
 
-            if (aEnt.level().noCollision(aEnt, testBox)) {
-                safePos = testPos;
+            AABB testBox = attacker.getBoundingBox().move(idealPos.x - attacker.getX(), idealPos.y - attacker.getY(), idealPos.z - attacker.getZ());
+            if (attacker.level().noCollision(attacker, testBox)) {
+                safePos = idealPos;
                 foundSafePos = true;
-                break;
+            } else {
+                safePos = idealPos;
+                foundSafePos = true;
+            }
+        }
+
+        else {
+            double optimalDist = (attacker.getBbWidth() + victim.getBbWidth()) / 2.0 + 0.5;
+            double minDist = (attacker.getBbWidth() + victim.getBbWidth()) / 2.0;
+
+            for (double d = optimalDist; d >= minDist; d -= 0.2) {
+                Vec3 testPos = victim.position().subtract(dir.scale(d));
+                testPos = new Vec3(testPos.x, attacker.getY(), testPos.z);
+
+                AABB testBox = attacker.getBoundingBox().move(testPos.x - attacker.getX(), 0, testPos.z - attacker.getZ());
+
+                if (attacker.level().noCollision(attacker, testBox)) {
+                    safePos = testPos;
+                    foundSafePos = true;
+                    break;
+                }
             }
         }
 
         if (foundSafePos) {
-            aEnt.teleportTo(safePos.x, safePos.y, safePos.z);
+            attacker.teleportTo(safePos.x, safePos.y, safePos.z);
         }
 
         float targetYaw = (float) (Mth.atan2(dir.z, dir.x) * (180D / Math.PI)) - 90.0F;
 
-        aEnt.setYRot(targetYaw);
-        aEnt.yBodyRot = targetYaw;
-        aEnt.yHeadRot = targetYaw;
-        aEnt.yRotO = targetYaw;
+        attacker.setYRot(targetYaw);
+        attacker.yBodyRot = targetYaw;
+        attacker.yHeadRot = targetYaw;
+        attacker.yRotO = targetYaw;
 
-        float vRot = targetYaw + 180.0F;
-        vEnt.setYRot(vRot);
-        vEnt.yBodyRot = vRot;
-        vEnt.yHeadRot = vRot;
-        vEnt.yRotO = vRot;
+        float vRot = attacker.getYRot() + 180.0F;
+        victim.setYRot(vRot);
+        victim.yBodyRot = vRot;
+        victim.yHeadRot = vRot;
+        victim.yRotO = vRot;
     }
 
     /**
