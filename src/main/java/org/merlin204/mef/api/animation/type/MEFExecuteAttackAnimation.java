@@ -11,6 +11,7 @@ import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.model.Armature;
+import yesman.epicfight.api.utils.AttackResult;
 import yesman.epicfight.gameasset.Animations;
 
 /**
@@ -60,8 +61,8 @@ public class MEFExecuteAttackAnimation extends AttackAnimation {
                 .newTimePair(phase.start, phase.contact).addState(EntityState.CAN_SKILL_EXECUTION, false)
                 .newTimePair(phase.start, phase.recovery).addState(EntityState.MOVEMENT_LOCKED, true).addState(EntityState.UPDATE_LIVING_MOTION, false).addState(EntityState.CAN_BASIC_ATTACK, false)
                 .newTimePair(phase.start, phase.end).addState(EntityState.INACTION, true)
-                //防乱转丢伤害
-                .newTimePair(0, Float.MAX_VALUE).addState(EntityState.TURNING_LOCKED, true)
+                //防乱转丢伤害,全程无敌
+                .newTimePair(0, Float.MAX_VALUE).addState(EntityState.TURNING_LOCKED, true).addStateRemoveOld(EntityState.ATTACK_RESULT, (damageSource -> AttackResult.ResultType.MISSED))
                 .newTimePair(preDelay, phase.contact).addState(EntityState.ATTACKING, true).addState(EntityState.PHASE_LEVEL, 2)
                 .newTimePair(phase.contact, phase.end).addState(EntityState.PHASE_LEVEL, 3);
     }
