@@ -21,7 +21,8 @@ public class MEFPonderPlugin implements PonderPlugin {
         ForgeRegisteredObjectsHelper forgeRegisteredObjectsHelper = new ForgeRegisteredObjectsHelper();
         PonderSceneRegistrationHelper<Item> itemHelper = helper.withKeyFunction(forgeRegisteredObjectsHelper::getKeyOrThrow);
 
-        itemHelper.forComponents(EpicFightItems.DIAMOND_TACHI.get())
-                .addStoryBoard("tachi_combo_showcase", MEFWeaponScenes::showcaseWeaponCombo);
+        itemHelper.forComponents(EpicFightItems.NETHERITE_TACHI.get())
+                .addStoryBoard("epicfight_showcase", MEFWeaponScenes::showcaseTachiBasicAttackCombo)
+                .addStoryBoard("epicfight_showcase", MEFWeaponScenes::showcaseRushingTempo);
     }
 }

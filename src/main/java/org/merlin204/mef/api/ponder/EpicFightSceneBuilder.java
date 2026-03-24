@@ -28,8 +28,8 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
 
     public static final String PLAY_SPEED = "play_speed_in_ponder_level";
 
-    private final EffectInstructions effects;
-    private final WorldInstructions world;
+    private final EpicFightEffectInstructions effects;
+    private final EpicFightWorldInstructions world;
 
     public EpicFightSceneBuilder(SceneBuilder baseSceneBuilder) {
         this(baseSceneBuilder.getScene());
@@ -37,24 +37,24 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
 
     private EpicFightSceneBuilder(PonderScene ponderScene) {
         super(ponderScene);
-        effects = new EffectInstructions();
-        world = new WorldInstructions();
+        effects = new EpicFightEffectInstructions();
+        world = new EpicFightWorldInstructions();
     }
 
     @Override
-    public @NotNull EffectInstructions effects() {
+    public @NotNull EpicFightSceneBuilder.EpicFightEffectInstructions effects() {
         return effects;
     }
 
     @Override
-    public @NotNull WorldInstructions world() {
+    public @NotNull EpicFightSceneBuilder.EpicFightWorldInstructions world() {
         return world;
     }
 
-    public class EffectInstructions extends PonderEffectInstructions {
+    public class EpicFightEffectInstructions extends PonderEffectInstructions {
     }
 
-    public class WorldInstructions extends PonderWorldInstructions {
+    public class EpicFightWorldInstructions extends PonderWorldInstructions {
         public void waitForState(ElementLink<EntityElement> link, Predicate<EntityState> statePredicate) {
             addInstruction(new PonderInstruction() {
                 private boolean complete = false;
@@ -95,6 +95,18 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
          */
         public void waitForComboInput(ElementLink<EntityElement> link) {
             waitForState(link, state -> state.canBasicAttack() || !state.inaction());
+        }
+
+        public void waitForInaction(ElementLink<EntityElement> link) {
+            waitForState(link, state -> !state.inaction());
+        }
+
+        public void waitForCanBasicAttack(ElementLink<EntityElement> link) {
+            waitForState(link, EntityState::canBasicAttack);
+        }
+
+        public void waitForCanUseSkill(ElementLink<EntityElement> link) {
+            waitForState(link, EntityState::canUseSkill);
         }
 
         /**

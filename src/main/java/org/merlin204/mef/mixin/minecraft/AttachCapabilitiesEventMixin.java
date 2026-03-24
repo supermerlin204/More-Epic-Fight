@@ -1,6 +1,5 @@
 package org.merlin204.mef.mixin.minecraft;
 
-
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -18,9 +17,8 @@ import yesman.epicfight.world.capabilities.provider.EntityPatchProvider;
 
 import java.util.Map;
 
-@Mixin(AttachCapabilitiesEvent.class)
+@Mixin(value = AttachCapabilitiesEvent.class, remap = false)
 public abstract class AttachCapabilitiesEventMixin<T> {
-
 
     @Shadow public abstract T getObject();
 
@@ -34,13 +32,10 @@ public abstract class AttachCapabilitiesEventMixin<T> {
     @Inject(method = "addCapability", at = @At("HEAD"), remap = false)
     private void mef$addCapability(ResourceLocation key, ICapabilityProvider cap, CallbackInfo ci) {
 
-        if (this.getObject() instanceof LivingEntity livingEntity){
-            if (cap instanceof EntityPatchProvider entityPatchProvider && entityPatchProvider.get() instanceof IMEFPatch imefPatch){
+        if (this.getObject() instanceof LivingEntity livingEntity) {
+            if (cap instanceof EntityPatchProvider entityPatchProvider && entityPatchProvider.get() instanceof IMEFPatch imefPatch) {
                 this.addCapability(ResourceLocation.fromNamespaceAndPath(MoreEpicFightMod.MOD_ID, "more_epic_fight_entity"), new MEFEntityCapabilityProvider(livingEntity));
             }
         }
-
     }
-
-
 }
