@@ -148,22 +148,20 @@ public class MEFWeaponScenes {
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 0.05F);
 
         epicFightSceneBuilder.overlay().showText(40)
-                .text("mef.ponder.tachi_rushing_tempo.text_3")
+                .text("mef.ponder.tachi_rushing_tempo.text_2")
                 .pointAt(util.vector().topOf(5, 2, 5))
                 .placeNearTarget();
 
         epicFightSceneBuilder.idle(50);
 
-
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 1.0F);
         epicFightSceneBuilder.world().playEntitiesAnimation(DummyPlayerEntity.class, AnimationsX.RUSHING_TEMPO1, 0.0F);
         epicFightWorldInstructions.waitForCanBasicAttack(attackerLink);
 
-
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 0.25F);
 
-        epicFightSceneBuilder.overlay().showText(60)
-                .text("mef.ponder.tachi_rushing_tempo.text_2")
+        epicFightSceneBuilder.overlay().showText(100)
+                .text("mef.ponder.tachi_rushing_tempo.text_3")
                 .pointAt(util.vector().topOf(5, 2, 5))
                 .placeNearTarget();
 
