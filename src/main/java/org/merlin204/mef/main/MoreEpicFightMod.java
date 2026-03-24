@@ -7,6 +7,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.merlin204.mef.api.jar.EmbeddedJarCopier;
 import org.merlin204.mef.network.MEFNetworkManager;
+import org.merlin204.mef.registry.MEFEntities;
 import org.merlin204.mef.registry.MEFMobEffects;
 
 
@@ -20,6 +21,7 @@ public class MoreEpicFightMod {
     public MoreEpicFightMod(FMLJavaModLoadingContext context) {
         IEventBus bus = context.getModEventBus();
         MEFMobEffects.EFFECTS.register(bus);
+        MEFEntities.ENTITIES.register(bus);
         bus.addListener(this::commonSetup);
         ponderLoaded = ModList.get().isLoaded("ponder");
     }

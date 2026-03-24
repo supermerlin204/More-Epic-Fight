@@ -6,10 +6,14 @@ import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.Selection;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.foundation.PonderSceneBuilder;
+import net.createmod.ponder.foundation.instruction.PonderInstruction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import yesman.epicfight.api.animation.AnimationManager;
+import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.animation.types.DynamicAnimation;
+import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.utils.LevelUtil;
 import yesman.epicfight.particle.EpicFightParticles;
@@ -17,6 +21,7 @@ import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 @SuppressWarnings("unchecked")
 public class EpicFightSceneBuilder extends PonderSceneBuilder {
@@ -47,25 +52,157 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
     }
 
     public class EffectInstructions extends PonderEffectInstructions {
-        //EF的残影需要实体，还是放world比较好
     }
 
     public class WorldInstructions extends PonderWorldInstructions {
+        public void waitForState(ElementLink<EntityElement> link, Predicate<EntityState> statePredicate) {
+            addInstruction(new PonderInstruction() {
+                private boolean complete = false;
 
-        //裂地特效
-        public void playGroundSlam(Vec3 pos, float radius) {
-            addInstruction(ponderScene -> {
-                LevelUtil.circleSlamFracture(null, ponderScene.getWorld(), pos, radius);
+                @Override
+                public boolean isComplete() { return complete; }
+
+                @Override
+                public boolean isBlocking() { return true; }
+
+                @Override
+                public void reset(PonderScene scene) {
+                    this.complete = false;
+                }
+
+                @Override
+                public void tick(PonderScene scene) {
+                    EntityElement element = scene.resolve(link);
+                    if (element != null) {
+                        element.ifPresent(entity -> {
+                            if (entity instanceof LivingEntity livingEntity) {
+                                EpicFightCapabilities.getUnparameterizedEntityPatch(livingEntity, LivingEntityPatch.class).ifPresent(patch -> {
+                                    if (statePredicate.test(patch.getEntityState())) {
+                                        complete = true;
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        complete = true;
+                    }
+                }
             });
+        }
+
+        /**
+         * 实体状态
+         */
+        public void waitForComboInput(ElementLink<EntityElement> link) {
+            waitForState(link, state -> state.canBasicAttack() || !state.inaction());
+        }
+
+        /**
+         * 动画播放的时间进度
+         */
+        public void waitForAnimationProgress(ElementLink<EntityElement> link, float targetPercentage) {
+            addInstruction(new PonderInstruction() {
+                private boolean complete = false;
+
+                @Override
+                public boolean isComplete() { return complete; }
+
+                @Override
+                public boolean isBlocking() { return true; }
+
+                @Override
+                public void reset(PonderScene scene) {
+                    this.complete = false;
+                }
+
+                @Override
+                public void tick(PonderScene scene) {
+                    EntityElement element = scene.resolve(link);
+                    if (element != null) {
+                        element.ifPresent(entity -> {
+                            if (entity instanceof LivingEntity livingEntity) {
+                                EpicFightCapabilities.getUnparameterizedEntityPatch(livingEntity, LivingEntityPatch.class).ifPresent(patch -> {
+                                    AnimationPlayer player = patch.getAnimator().getPlayerFor(null);
+                                    DynamicAnimation currentAnim = null;
+                                    if (player != null) {
+                                        currentAnim = player.getAnimation().get();
+                                    }
+
+                                    if (currentAnim == null) {
+                                        complete = true;
+                                        return;
+                                    }
+
+                                    float totalTime = currentAnim.getTotalTime();
+                                    if (totalTime > 0) {
+                                        float progress = player.getElapsedTime() / totalTime;
+                                        if (progress >= targetPercentage) {
+                                            complete = true;
+                                        }
+                                    } else {
+                                        complete = true;
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        complete = true;
+                    }
+                }
+            });
+        }
+
+        /**
+         * 动画播放的时间
+         */
+        public void waitForAnimationTime(ElementLink<EntityElement> link, float targetTimeSeconds) {
+            addInstruction(new PonderInstruction() {
+                private boolean complete = false;
+
+                @Override
+                public boolean isComplete() { return complete; }
+
+                @Override
+                public boolean isBlocking() { return true; }
+
+                @Override
+                public void reset(PonderScene scene) {
+                    this.complete = false;
+                }
+
+                @Override
+                public void tick(PonderScene scene) {
+                    EntityElement element = scene.resolve(link);
+                    if (element != null) {
+                        element.ifPresent(entity -> {
+                            if (entity instanceof LivingEntity livingEntity) {
+                                EpicFightCapabilities.getUnparameterizedEntityPatch(livingEntity, LivingEntityPatch.class).ifPresent(patch -> {
+                                    AnimationPlayer player = patch.getAnimator().getPlayerFor(null);
+                                    if (player != null && (player.getAnimation() == null || player.getElapsedTime() >= targetTimeSeconds)) {
+                                        complete = true;
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        complete = true;
+                    }
+                }
+            });
+        }
+
+        public void playGroundSlam(Vec3 pos, float radius) {
+            addInstruction(PonderInstruction.simple(ponderScene -> {
+                LevelUtil.circleSlamFracture(null, ponderScene.getWorld(), pos, radius);
+            }));
         }
 
         public void playGroundSlam(Vec3 pos, float radius, boolean noSound, boolean noParticle) {
-            addInstruction(ponderScene -> {
+            addInstruction(PonderInstruction.simple(ponderScene -> {
                 LevelUtil.circleSlamFracture(null, ponderScene.getWorld(), pos, radius, noSound, noParticle);
-            });
+            }));
         }
 
-        //残影粒子
         public <E extends LivingEntity, T extends LivingEntityPatch<?>> void addEntityAfterImageParticle(Class<E> entityClass) {
             modifyEntities(entityClass, entity -> {
                 entity.level().addParticle(EpicFightParticles.WHITE_AFTERIMAGE.get(), entity.getX(), entity.getY(), entity.getZ(), Double.longBitsToDouble(entity.getId()), 0.0, 0.0);
@@ -78,25 +215,32 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
             });
         }
 
-        //基础的操作patch
         public <E extends LivingEntity, T extends LivingEntityPatch<?>> void modifyEntityPatches(Class<E> entityClass, Class<T> type, Consumer<T> entityPatchCallBack) {
-            super.modifyEntities(entityClass, e -> EpicFightCapabilities.getUnparameterizedEntityPatch(e, type).ifPresent(entityPatchCallBack));
+            super.modifyEntities(entityClass, livingEntity -> {
+                EpicFightCapabilities.getUnparameterizedEntityPatch(livingEntity, type).ifPresent(entityPatchCallBack);
+            });
         }
 
         public <E extends LivingEntity, T extends LivingEntityPatch<?>> void modifyEntityPatchesInside(Class<E> entityClass, Selection area, Class<T> type, Consumer<T> entityPatchCallBack) {
-            super.modifyEntitiesInside(entityClass, area, e -> EpicFightCapabilities.getUnparameterizedEntityPatch(e, type).ifPresent(entityPatchCallBack));
+            super.modifyEntitiesInside(entityClass, area, livingEntity -> {
+                EpicFightCapabilities.getUnparameterizedEntityPatch(livingEntity, type).ifPresent(entityPatchCallBack);
+            });
         }
 
         public <E extends LivingEntity, T extends LivingEntityPatch<?>> void modifyEntityPatch(ElementLink<EntityElement> link, Class<T> type, Consumer<T> entityPatchCallBack) {
-            super.modifyEntity(link, e -> EpicFightCapabilities.getUnparameterizedEntityPatch(e, type).ifPresent(entityPatchCallBack));
+            super.modifyEntity(link, e -> {
+                if (e instanceof LivingEntity livingEntity) {
+                    EpicFightCapabilities.getUnparameterizedEntityPatch(livingEntity, type).ifPresent(entityPatchCallBack);
+                }
+            });
         }
 
-        //改动画播放速度
+        //调速
         public <E extends LivingEntity> void modifyEntitiesPlaySpeed(Class<E> entityClass, float playSpeed) {
             super.modifyEntities(entityClass, e -> e.getPersistentData().putFloat(PLAY_SPEED, playSpeed));
         }
 
-        public<E extends LivingEntity> void modifyEntitiesInsidePlaySpeed(Class<E> entityClass, Selection area, float playSpeed) {
+        public <E extends LivingEntity> void modifyEntitiesInsidePlaySpeed(Class<E> entityClass, Selection area, float playSpeed) {
             super.modifyEntitiesInside(entityClass, area, e -> e.getPersistentData().putFloat(PLAY_SPEED, playSpeed));
         }
 
@@ -104,7 +248,8 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
             super.modifyEntity(link, e -> e.getPersistentData().putFloat(PLAY_SPEED, playSpeed));
         }
 
-        //播放动画相关预设
+
+        //播动画
         public <E extends LivingEntity, A extends StaticAnimation> void playEntitiesAnimation(Class<E> entityClass, Selection area, AnimationManager.AnimationAccessor<A> animationAccessor, float transitionTimeModifier) {
             this.modifyEntityPatchesInside(entityClass, area, LivingEntityPatch.class, livingEntityPatch -> {
                 livingEntityPatch.playAnimation(animationAccessor, transitionTimeModifier);
@@ -170,7 +315,5 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
         public <A extends StaticAnimation> void stopPlaying(ElementLink<EntityElement> link, AnimationManager.AnimationAccessor<A> animationAccessor) {
             this.modifyEntityPatch(link, LivingEntityPatch.class, patch -> patch.stopPlaying(animationAccessor));
         }
-
     }
-
 }

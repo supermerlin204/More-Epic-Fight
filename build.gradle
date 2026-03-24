@@ -169,14 +169,17 @@ dependencies {
 
     //史诗战斗
     implementation fg.deobf("maven.modrinth:epic-fight:${epicfight_version}")
+    //GG武器
+    implementation fg.deobf("curse.maven:weapons-of-miracles-epicfight-918614:7477498")
+
 
     //俺寻思
 //    compileOnly jarJar("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"){
 //        jarJar.ranged(it, "[1.0.51,)")
 //        transitive = false
 //    }
-    compileOnly fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}") { transitive = false }
-    compileOnly fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
+    implementation fg.deobf("net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}") { transitive = false }
+    implementation fg.deobf("dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}")
 
     //训练人偶,打桩用
     runtimeOnly fg.deobf("curse.maven:selene-499980:5478857")

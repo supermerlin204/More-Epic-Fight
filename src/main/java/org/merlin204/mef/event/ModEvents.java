@@ -5,6 +5,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -17,10 +21,20 @@ import org.merlin204.mef.api.forgeevent.*;
 import org.merlin204.mef.api.network.PacketHandler;
 import org.merlin204.mef.api.stamina.type.DarkSoulStaminaType;
 import org.merlin204.mef.api.stamina.type.SekiroStaminaType;
+import org.merlin204.mef.client.render.DummyPlayerRenderer;
+import org.merlin204.mef.client.render.patched.PDummyPlayerRenderer;
+import org.merlin204.mef.entity.DummyPlayerEntity;
+import org.merlin204.mef.entity.DummyPlayerEntityPatch;
 import org.merlin204.mef.main.MoreEpicFightMod;
+import org.merlin204.mef.registry.MEFEntities;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.client.forgeevent.PatchedRenderersEvent;
+import yesman.epicfight.api.client.model.Meshes;
+import yesman.epicfight.api.forgeevent.EntityPatchRegistryEvent;
 import yesman.epicfight.api.utils.AttackResult;
+import yesman.epicfight.client.renderer.patched.entity.PHumanoidRenderer;
+import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.CapabilityItem;
@@ -225,7 +239,36 @@ public class ModEvents {
     }
 
     @SubscribeEvent
+    public static void entityAttributeEvent(EntityAttributeCreationEvent event) {
+        event.put(MEFEntities.DUMMY_PLAYER.get(), DummyPlayerEntity.createAttributes());
+    }
+
+    @SubscribeEvent
+    public static void setPatch(EntityPatchRegistryEvent event) {
+        event.getTypeEntry().put(MEFEntities.DUMMY_PLAYER.get(), (entity) -> DummyPlayerEntityPatch::new);
+    }
+
+    @SubscribeEvent
+    @OnlyIn(Dist.CLIENT)
+    public static void rendererRegister(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(MEFEntities.DUMMY_PLAYER.get(), DummyPlayerRenderer::new);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    @SubscribeEvent
+    public static void onPatchedRenderer(PatchedRenderersEvent.Add event){
+        event.addPatchedEntityRenderer(MEFEntities.DUMMY_PLAYER.get(),
+                entityType -> new PDummyPlayerRenderer(event.getContext(), entityType)
+                        .initLayerLast(event.getContext(), entityType));
+    }
+
+    public static void registerArmatures() {
+        Armatures.registerEntityTypeArmature(MEFEntities.DUMMY_PLAYER.get(), Armatures.BIPED);
+    }
+
+    @SubscribeEvent
     public static void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(ModEvents::registerArmatures);
         PacketHandler.register();
     }
 
