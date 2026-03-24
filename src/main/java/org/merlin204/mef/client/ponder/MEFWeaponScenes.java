@@ -5,22 +5,19 @@ import net.createmod.ponder.api.element.EntityElement;
 import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.SceneBuildingUtil;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import org.merlin204.mef.api.ponder.EpicFightSceneBuilder;
+import org.merlin204.mef.entity.DummyPlayerEntity;
+import org.merlin204.mef.registry.MEFEntities;
 import reascer.wom.gameasset.animations.weapons.AnimsMoonless;
-import reascer.wom.gameasset.animations.weapons.AnimsNapoleon;
-import reascer.wom.gameasset.animations.weapons.AnimsSatsujin;
+import reascer.wom.gameasset.animations.weapons.AnimsSolar;
 import reascer.wom.world.item.WOMItems;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.AttackAnimation;
-import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 import yesman.epicfight.world.capabilities.item.WeaponCapability;
-import yesman.epicfight.world.item.EpicFightItems;
 
 import java.util.List;
 
@@ -36,7 +33,7 @@ public class MEFWeaponScenes {
 
         baseScene.idle(5);
 
-        ItemStack displayItem = new ItemStack(WOMItems.MOONLESS.get());
+        ItemStack displayItem = new ItemStack(WOMItems.SOLAR.get());
 
         List<AnimationManager.AnimationAccessor<? extends AttackAnimation>> comboMotions = null;
         var itemCap = EpicFightCapabilities.getItemStackCapability(displayItem);
@@ -45,7 +42,7 @@ public class MEFWeaponScenes {
         }
 
         ElementLink<EntityElement> attackerLink = baseScene.world().createEntity(level -> {
-            LivingEntity attacker = EntityType.ZOMBIE.create(level);
+            LivingEntity attacker = MEFEntities.DUMMY_PLAYER.get().create(level);
             if (attacker != null) {
                 attacker.setPos(2.5, 1, 2.5);
                 attacker.setYRot(180);
@@ -57,7 +54,7 @@ public class MEFWeaponScenes {
                     patch.setYRot(180);
                     patch.setYRotO(180);
                     patch.getClientAnimator().resetLivingAnimations();
-                    patch.playAnimationInClientSide(AnimsMoonless.MOONLESS_WALK, 0.0F);
+                    patch.playAnimationInClientSide(AnimsSolar.SOLAR_IDLE, 0.0F);
                 });
             }
             return attacker;
@@ -74,7 +71,7 @@ public class MEFWeaponScenes {
 
         if (comboMotions != null) {
             for (AnimationManager.AnimationAccessor<? extends AttackAnimation> currentMotion : comboMotions) {
-                scene.world().playEntitiesAnimation(Zombie.class, currentMotion, 0.0F);
+                scene.world().playEntitiesAnimation(DummyPlayerEntity.class, currentMotion, 0.0F);
                 scene.world().waitForComboInput(attackerLink);
             }
         }
