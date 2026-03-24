@@ -1,6 +1,7 @@
 package org.merlin204.mef.main;
 
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -14,10 +15,17 @@ public class MoreEpicFightMod {
 
     public static final String MOD_ID = "more_epic_fight";
 
+    private static boolean ponderLoaded;
+
     public MoreEpicFightMod(FMLJavaModLoadingContext context) {
         IEventBus bus = context.getModEventBus();
         MEFMobEffects.EFFECTS.register(bus);
         bus.addListener(this::commonSetup);
+        ponderLoaded = ModList.get().isLoaded("ponder");
+    }
+
+    public static boolean isPonderLoaded() {
+        return ponderLoaded;
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
