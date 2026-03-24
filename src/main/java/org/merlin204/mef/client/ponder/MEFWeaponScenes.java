@@ -10,7 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import org.merlin204.mef.api.ponder.EpicFightSceneBuilder;
 import org.merlin204.mef.entity.DummyPlayerEntity;
 import org.merlin204.mef.registry.MEFEntities;
-import reascer.wom.gameasset.animations.weapons.AnimsMoonless;
+import reascer.wom.gameasset.animations.weapons.AnimsSatsujin;
 import reascer.wom.gameasset.animations.weapons.AnimsSolar;
 import reascer.wom.world.item.WOMItems;
 import yesman.epicfight.api.animation.AnimationManager;
@@ -33,7 +33,7 @@ public class MEFWeaponScenes {
 
         baseScene.idle(5);
 
-        ItemStack displayItem = new ItemStack(WOMItems.SOLAR.get());
+        ItemStack displayItem = new ItemStack(WOMItems.SATSUJIN.get());
 
         List<AnimationManager.AnimationAccessor<? extends AttackAnimation>> comboMotions = null;
         var itemCap = EpicFightCapabilities.getItemStackCapability(displayItem);
@@ -54,7 +54,7 @@ public class MEFWeaponScenes {
                     patch.setYRot(180);
                     patch.setYRotO(180);
                     patch.getClientAnimator().resetLivingAnimations();
-                    patch.playAnimationInClientSide(AnimsSolar.SOLAR_IDLE, 0.0F);
+                    patch.playAnimationInClientSide(AnimsSatsujin.SATSUJIN_IDLE, 0.0F);
                 });
             }
             return attacker;
