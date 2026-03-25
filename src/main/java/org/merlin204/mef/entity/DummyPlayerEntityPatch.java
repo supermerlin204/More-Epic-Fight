@@ -1,18 +1,29 @@
 package org.merlin204.mef.entity;
 
 import com.asanginxst.epicfightx.gameassets.animations.AnimationsX;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.PathfinderMob;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.Animator;
+import yesman.epicfight.api.animation.LivingMotion;
 import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.gameasset.Animations;
 import yesman.epicfight.gameasset.Armatures;
 import yesman.epicfight.model.armature.HumanoidArmature;
 import yesman.epicfight.world.capabilities.entitypatch.Factions;
 import yesman.epicfight.world.capabilities.entitypatch.HumanoidMobPatch;
+import yesman.epicfight.world.capabilities.item.CapabilityItem;
+import yesman.epicfight.world.capabilities.item.Style;
 import yesman.epicfight.world.damagesource.StunType;
 
-public class DummyPlayerEntityPatch extends HumanoidMobPatch<DummyPlayerEntity> {
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+public class DummyPlayerEntityPatch<T extends PathfinderMob> extends HumanoidMobPatch<T> {
 
     public DummyPlayerEntityPatch() {
         super(Factions.NEUTRAL);
@@ -47,7 +58,40 @@ public class DummyPlayerEntityPatch extends HumanoidMobPatch<DummyPlayerEntity> 
     }
 
     @Override
-    public void updateMotion(boolean b) {
+    public void updateMotion(boolean considerInaction) {
+    }
+
+    public void updateLivingMotionsForPonder() {
+
+        CapabilityItem mainHandCap = this.getHoldingItemCapability(InteractionHand.MAIN_HAND);
+        CapabilityItem offHandCap = this.getAdvancedHoldingItemCapability(InteractionHand.OFF_HAND);
+
+        Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> livingMotionModifiers = new HashMap<>(mainHandCap.getLivingMotionModifier(this, InteractionHand.MAIN_HAND));
+        livingMotionModifiers.putAll(offHandCap.getLivingMotionModifier(this, InteractionHand.OFF_HAND));
+
+        Map<LivingMotion, AssetAccessor<? extends StaticAnimation>> newLivingAnimations = new HashMap<>(livingMotionModifiers);
+
+        if (this.weaponLivingMotions != null && this.weaponLivingMotions.containsKey(mainHandCap.getWeaponCategory())) {
+
+            Map<Style, Set<Pair<LivingMotion, AnimationManager.AnimationAccessor<? extends StaticAnimation>>>> byStyle = this.weaponLivingMotions.get(mainHandCap.getWeaponCategory());
+            Style style = mainHandCap.getStyle(this);
+
+            if (byStyle.containsKey(style) || byStyle.containsKey(CapabilityItem.Styles.COMMON)) {
+                Set<Pair<LivingMotion, AnimationManager.AnimationAccessor<? extends StaticAnimation>>> animModifierSet = byStyle.getOrDefault(style, byStyle.get(CapabilityItem.Styles.COMMON));
+
+                for (Pair<LivingMotion, AnimationManager.AnimationAccessor<? extends StaticAnimation>> pair : animModifierSet) {
+                    newLivingAnimations.put(pair.getFirst(), pair.getSecond());
+                }
+            }
+        }
+
+        this.getAnimator().resetLivingAnimations();
+        newLivingAnimations.forEach(this.getAnimator()::addLivingAnimation);
+    }
+
+    @Override
+    public void modifyLivingMotionByCurrentItem(boolean onStartTracking) {
+        this.updateLivingMotionsForPonder();
     }
 
     /*@Override

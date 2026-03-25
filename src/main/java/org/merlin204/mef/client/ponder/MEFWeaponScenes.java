@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import org.merlin204.mef.api.ponder.EpicFightSceneBuilder;
 import org.merlin204.mef.entity.DummyPlayerEntity;
+import org.merlin204.mef.entity.DummyPlayerEntityPatch;
 import org.merlin204.mef.registry.MEFEntities;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.types.AttackAnimation;
@@ -51,11 +52,10 @@ public class MEFWeaponScenes {
                 attackPerformer.yHeadRot = 180;
                 attackPerformer.setItemInHand(InteractionHand.MAIN_HAND, displayItem);
 
-                EpicFightCapabilities.getUnparameterizedEntityPatch(attackPerformer, LivingEntityPatch.class).ifPresent(patch -> {
-                    patch.setYRot(180);
-                    patch.setYRotO(180);
-                    patch.getClientAnimator().resetLivingAnimations();
-                    patch.playAnimation(AnimationsX.BIPED_HOLD_TACHI, 0.0F);
+                EpicFightCapabilities.getUnparameterizedEntityPatch(attackPerformer, DummyPlayerEntityPatch.class).ifPresent(dummyPlayerEntityPatch -> {
+                    dummyPlayerEntityPatch.setYRot(180);
+                    dummyPlayerEntityPatch.setYRotO(180);
+                    dummyPlayerEntityPatch.updateLivingMotionsForPonder();
                 });
             }
             return attackPerformer;
@@ -129,11 +129,10 @@ public class MEFWeaponScenes {
                 attackPerformer.yHeadRot = 180;
                 attackPerformer.setItemInHand(InteractionHand.MAIN_HAND, displayItem);
 
-                EpicFightCapabilities.getUnparameterizedEntityPatch(attackPerformer, LivingEntityPatch.class).ifPresent(patch -> {
-                    patch.setYRot(180);
-                    patch.setYRotO(180);
-                    patch.getClientAnimator().resetLivingAnimations();
-                    patch.playAnimation(AnimationsX.BIPED_HOLD_TACHI, 0.0F);
+                EpicFightCapabilities.getUnparameterizedEntityPatch(attackPerformer, DummyPlayerEntityPatch.class).ifPresent(dummyPlayerEntityPatch -> {
+                    dummyPlayerEntityPatch.setYRot(180);
+                    dummyPlayerEntityPatch.setYRotO(180);
+                    dummyPlayerEntityPatch.updateLivingMotionsForPonder();
                 });
             }
             return attackPerformer;
@@ -221,12 +220,14 @@ public class MEFWeaponScenes {
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 0.25F);
         epicFightSceneBuilder.idle(10);
 
+        epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 1.0F);
+        epicFightWorldInstructions.simulateSpring(attackerLink, 2, 10);
+        epicFightSceneBuilder.idle(10);
         epicFightSceneBuilder.overlay().showText(80)
                 .text("mef.ponder.tachi_rushing_tempo.text_4")
                 .pointAt(util.vector().topOf(5, 2, 5))
                 .placeNearTarget();
 
-        epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 1.0F);
         epicFightSceneBuilder.world().playEntitiesAnimation(DummyPlayerEntity.class, AnimationsX.TACHI_DASH, 0.0F);
         epicFightWorldInstructions.waitForCanUseSkill(attackerLink);
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 0.25F);
@@ -239,6 +240,11 @@ public class MEFWeaponScenes {
         epicFightSceneBuilder.idle(10);
 
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 1.0F);
+        epicFightWorldInstructions.setPosition(attackerLink, 5.5, 1, 5.5);
+        epicFightSceneBuilder.idle(5);
+        epicFightWorldInstructions.simulateJump(attackerLink);
+        epicFightSceneBuilder.idle(8);
+
         epicFightSceneBuilder.world().playEntitiesAnimation(DummyPlayerEntity.class, ExtraAnimations.TACHI_AIR_SLASH, 0.0F);
         epicFightWorldInstructions.waitForCanUseSkill(attackerLink);
         epicFightWorldInstructions.modifyEntityPlaySpeed(attackerLink, 0.25F);
