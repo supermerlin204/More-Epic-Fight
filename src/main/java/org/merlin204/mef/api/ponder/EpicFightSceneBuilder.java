@@ -7,14 +7,20 @@ import net.createmod.ponder.api.scene.Selection;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.foundation.PonderSceneBuilder;
 import net.createmod.ponder.foundation.instruction.PonderInstruction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ForgeHooks;
 import org.jetbrains.annotations.NotNull;
+import org.merlin204.mef.entity.DummyPlayerEntity;
+import org.merlin204.mef.entity.DummyPlayerEntityPatch;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationPlayer;
+import yesman.epicfight.api.animation.LivingMotions;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
+import yesman.epicfight.api.asset.AssetAccessor;
 import yesman.epicfight.api.utils.LevelUtil;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
@@ -55,6 +61,31 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
     }
 
     public class EpicFightWorldInstructions extends PonderWorldInstructions {
+
+        public void setPosition(ElementLink<EntityElement> link, double x, double y, double z) {
+            world().modifyEntity(link, entity -> {
+                if (entity instanceof DummyPlayerEntity dummyPlayerEntity) {
+                    dummyPlayerEntity.setPos(x, y, z);
+                }
+            });
+        }
+
+        public void simulateJump(ElementLink<EntityElement> link) {
+            world().modifyEntity(link, entity -> {
+                if (entity instanceof DummyPlayerEntity dummyPlayerEntity) {
+                    dummyPlayerEntity.jumpFromGround(1.5F);
+                }
+            });
+        }
+
+        public void simulateSpring(ElementLink<EntityElement> link, float blocks, int duration) {
+            world().modifyEntity(link, entity -> {
+                if (entity instanceof DummyPlayerEntity dummyPlayerEntity) {
+                    dummyPlayerEntity.sprintForward(blocks, duration);
+                }
+            });
+        }
+
         public void waitForState(ElementLink<EntityElement> link, Predicate<EntityState> statePredicate) {
             addInstruction(new PonderInstruction() {
                 private boolean complete = false;

@@ -75,11 +75,17 @@ public class MEFWeaponScenes {
             for (int i = 0; i < size; i++) {
 
                 if (i == size - 2) {
+                    epicFightWorldInstructions.simulateSpring(attackerLink, 2, 10);
+                    epicFightSceneBuilder.idle(10);
                     epicFightSceneBuilder.overlay().showText(30)
                             .text("mef.ponder.tachi_basic_attack_combo.text_2")
                             .pointAt(util.vector().centerOf(5, 0, 5))
                             .placeNearTarget();
                 } else if (i == size - 1) {
+                    epicFightWorldInstructions.setPosition(attackerLink, 5.5, 1, 5.5);
+                    epicFightSceneBuilder.idle(5);
+                    epicFightWorldInstructions.simulateJump(attackerLink);
+                    epicFightSceneBuilder.idle(8);
                     epicFightSceneBuilder.overlay().showText(40)
                             .text("mef.ponder.tachi_basic_attack_combo.text_3")
                             .pointAt(util.vector().topOf(5, 2, 5))

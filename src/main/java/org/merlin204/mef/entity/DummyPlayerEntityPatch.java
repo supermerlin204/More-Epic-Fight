@@ -1,5 +1,6 @@
 package org.merlin204.mef.entity;
 
+import com.asanginxst.epicfightx.gameassets.animations.AnimationsX;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.Animator;
 import yesman.epicfight.api.animation.LivingMotions;
@@ -25,8 +26,10 @@ public class DummyPlayerEntityPatch extends HumanoidMobPatch<DummyPlayerEntity> 
     public void initAnimator(Animator animator) {
         super.initAnimator(animator);
         animator.addLivingAnimation(LivingMotions.IDLE, Animations.BIPED_IDLE);
+        animator.addLivingAnimation(LivingMotions.JUMP, AnimationsX.BIPED_JUMP);
         animator.addLivingAnimation(LivingMotions.WALK, Animations.BIPED_WALK);
-        animator.addLivingAnimation(LivingMotions.CHASE, Animations.BIPED_WALK);
+        animator.addLivingAnimation(LivingMotions.CHASE, AnimationsX.BIPED_RUN);
+        animator.addLivingAnimation(LivingMotions.RUN, AnimationsX.BIPED_RUN);
         animator.addLivingAnimation(LivingMotions.FALL, Animations.BIPED_FALL);
         animator.addLivingAnimation(LivingMotions.MOUNT, Animations.BIPED_MOUNT);
         animator.addLivingAnimation(LivingMotions.DEATH, Animations.BIPED_DEATH);
@@ -45,6 +48,13 @@ public class DummyPlayerEntityPatch extends HumanoidMobPatch<DummyPlayerEntity> 
 
     @Override
     public void updateMotion(boolean b) {
-
     }
+
+    /*@Override
+    public boolean shouldMoveOnCurrentSide(ActionAnimation actionAnimation) {
+        if (this.original.level().isClientSide() && this.original.level() instanceof PonderLevel ponderLevel) {
+            return true;
+        }
+        return super.shouldMoveOnCurrentSide(actionAnimation);
+    }*/
 }
