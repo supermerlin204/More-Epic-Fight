@@ -1,16 +1,5 @@
 {
   "key.mef.common": "More Epic Fight",
   "key.mef.parry": "Parry",
-  "key.mef.execute": "Execute",
-
-  "more_epic_fight.ponder.tachi_basic_attack_combo.header": "Tachi Basic Attack Combos",
-  "more_epic_fight.ponder.tachi_basic_attack_combo.text_1": "Tachi Basic Attack",
-  "more_epic_fight.ponder.tachi_basic_attack_combo.text_2": "Tachi Dash Attack",
-  "more_epic_fight.ponder.tachi_basic_attack_combo.text_3": "Tachi Jump Attack",
-
-  "more_epic_fight.ponder.tachi_rushing_tempo.header": "Tachi Innate Skill: Rushing Tempo",
-  "more_epic_fight.ponder.tachi_rushing_tempo.text_1": "Rushing Tempo allows you to weave follow-up attacks during the recovery of basic attacks.",
-  "more_epic_fight.ponder.tachi_rushing_tempo.text_2": "Press the skill key immediately during the basic attack's recovery animation!",
-  "more_epic_fight.ponder.tachi_rushing_tempo.text_3": "Successful chain! Master the rhythm to alternate attacks infinitely...",
-  "more_epic_fight.ponder.tachi_rushing_tempo.text_4": "Can also be chained after dash or jump attacks."
+  "key.mef.execute": "Execute"
 }

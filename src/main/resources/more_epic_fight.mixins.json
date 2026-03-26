@@ -18,8 +18,7 @@
   ],
   "client": [
     "epicfight.HealthBarMixin",
-    "epicfight.client.MixinEpicFightCameraAPI",
-    "epicfight.client.RenderEngineEventsMixin"
+    "epicfight.client.MixinEpicFightCameraAPI"
   ],
   "injectors": {
     "defaultRequire": 1
