@@ -17,19 +17,12 @@ import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
 @Mixin(value = AnimationPlayer.class, remap = false)
 public class AnimationPlayerMixin {
 
-    /**
-     * 修改 playbackSpeed 局部变量
-     * 经过ANIMATION_SPEED调整后参与后续计算
-     *
-     * 补充在PonderLevel时的变速
-     */
     @ModifyVariable(
             method = "tick",
             at = @At(value = "FIELD", target = "Lyesman/epicfight/api/animation/AnimationPlayer;elapsedTime:F", opcode = Opcodes.GETFIELD, ordinal = 2),
             ordinal = 0
     )
-    private float multiplyPlaybackSpeed(float playbackSpeed, LivingEntityPatch<?> entityPatch) {
-
+    private float mef$applyAnimationSpeed(float playbackSpeed, LivingEntityPatch<?> entityPatch) {
         if(MoreEpicFightMod.isPonderLoaded() && entityPatch.isLogicalClient()) {
             if(entityPatch.getOriginal().level() instanceof PonderLevel) {
                 CompoundTag data = entityPatch.getOriginal().getPersistentData();
@@ -41,8 +34,9 @@ public class AnimationPlayerMixin {
 
         if (MEFEntityAPI.getStaminaTypeByEntity(entityPatch.getOriginal()) != null) {
             MEFEntity mefEntity = MEFCapabilities.getMEFEntity(entityPatch.getOriginal());
-            if (mefEntity.getOriginal() != null) {
-                return playbackSpeed * mefEntity.getAnimationSpeed();
+            float speedMultiplier = mefEntity.getAnimationSpeed();
+            if (speedMultiplier != 1.0F && speedMultiplier != 0) {
+                return playbackSpeed * speedMultiplier;
             }
         }
         return playbackSpeed;

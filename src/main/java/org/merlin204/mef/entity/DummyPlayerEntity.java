@@ -44,7 +44,7 @@ public class DummyPlayerEntity extends PathfinderMob {
         this.dashVelocity = new Vec3(totalX / durationTicks, 0, totalZ / durationTicks);
         this.dashTicks = durationTicks;
 
-        DummyPlayerEntityPatch patch = EpicFightCapabilities.getEntityPatch(this, DummyPlayerEntityPatch.class);
+        DummyPlayerEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(this, DummyPlayerEntityPatch.class);
         if (patch != null) {
             patch.getClientAnimator().playAnimation(patch.getClientAnimator().getLivingAnimation(LivingMotions.RUN, null), 0);
         }
@@ -61,7 +61,7 @@ public class DummyPlayerEntity extends PathfinderMob {
             newZ += Mth.cos(f) * 0.2F;
         }
 
-        DummyPlayerEntityPatch patch = EpicFightCapabilities.getEntityPatch(this, DummyPlayerEntityPatch.class);
+        DummyPlayerEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(this, DummyPlayerEntityPatch.class);
         if (patch != null) {
             patch.getClientAnimator().playAnimation(patch.getClientAnimator().getLivingAnimation(LivingMotions.JUMP, null), 0);
         }

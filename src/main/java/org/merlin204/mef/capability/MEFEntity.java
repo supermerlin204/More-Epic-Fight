@@ -18,7 +18,6 @@ public class MEFEntity {
 
     public static final MEFEntity EMPTY_MEF_ENTITY = new MEFEntity();
 
-
     //耐力值
     protected static EntityDataAccessor<Float> STAMINA;
     //动画播放速度(只适用于EF实体)
@@ -58,13 +57,22 @@ public class MEFEntity {
         livingentity.getEntityData().define(KNOCKDOWN_TIME, 0);
     }
 
-    public StaminaType getStaminaType() {
+    /**
+     * 重置所有速度相关的属性 (动画调速、对峙移动速度、对峙持续时间)
+     * 用于动画结束或被切换时调用
+     */
+    public void resetSpeedProperties() {
+        if (original == null) return;
+        this.setAnimationSpeed(1.0F);
+        this.setWonderSpeed(0.5F);
+        this.setWonderTime(0);
+    }
 
+    public StaminaType getStaminaType() {
         LivingEntityPatch<?> patch = EpicFightCapabilities.getEntityPatch(original,LivingEntityPatch.class);
         if (patch instanceof IMEFPatch imefPatch){
             return imefPatch.getStaminaType();
         }
-
         return staminaType;
     }
 
@@ -210,7 +218,7 @@ public class MEFEntity {
         tag.putFloat("mef_stamina",getStamina());
     }
 
-    public void loadNBTData(CompoundTag tag) {
+    public final void loadNBTData(CompoundTag tag) {
         if (!staminaIsPresent())return;
         if (tag.contains("mef_stamina")){
             setStamina(tag.getFloat("mef_stamina"));
@@ -219,17 +227,13 @@ public class MEFEntity {
 
     public final void tick() {
         if (original == null)return;
-
         if (!original.level().isClientSide){
             if (getWonderTime() > 0){
                 setWonderTime(getWonderTime() - 1);
             }
-
             if (staminaIsPresent() && getStaminaType().canRecover(this)){
                 this.setStamina(getStamina() + getStaminaRegen());
             }
-
         }
     }
-
 }

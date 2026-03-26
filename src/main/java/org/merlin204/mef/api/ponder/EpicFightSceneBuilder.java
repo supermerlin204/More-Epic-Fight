@@ -7,7 +7,9 @@ import net.createmod.ponder.api.scene.Selection;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.foundation.PonderSceneBuilder;
 import net.createmod.ponder.foundation.instruction.PonderInstruction;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeHooks;
@@ -17,15 +19,19 @@ import org.merlin204.mef.entity.DummyPlayerEntityPatch;
 import yesman.epicfight.api.animation.AnimationManager;
 import yesman.epicfight.api.animation.AnimationPlayer;
 import yesman.epicfight.api.animation.LivingMotions;
+import yesman.epicfight.api.animation.types.AttackAnimation;
 import yesman.epicfight.api.animation.types.DynamicAnimation;
 import yesman.epicfight.api.animation.types.EntityState;
 import yesman.epicfight.api.animation.types.StaticAnimation;
 import yesman.epicfight.api.asset.AssetAccessor;
+import yesman.epicfight.api.collider.Collider;
 import yesman.epicfight.api.utils.LevelUtil;
 import yesman.epicfight.particle.EpicFightParticles;
 import yesman.epicfight.world.capabilities.EpicFightCapabilities;
 import yesman.epicfight.world.capabilities.entitypatch.LivingEntityPatch;
+import yesman.epicfight.world.damagesource.StunType;
 
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -241,6 +247,97 @@ public class EpicFightSceneBuilder extends PonderSceneBuilder {
                         });
                     } else {
                         complete = true;
+                    }
+                }
+            });
+        }
+
+        /**
+         * 等待攻击命中
+         */
+        public void waitForAttackHit(ElementLink<EntityElement> attackerLink, ElementLink<EntityElement> victimLink) {
+            addInstruction(new PonderInstruction() {
+                private boolean complete = false;
+
+                @Override
+                public boolean isComplete() { return complete; }
+
+                @Override
+                public boolean isBlocking() { return true; }
+
+                @Override
+                public void reset(PonderScene scene) {
+                    this.complete = false;
+                }
+
+                @Override
+                public void tick(PonderScene scene) {
+                    EntityElement attackerElem = scene.resolve(attackerLink);
+                    EntityElement victimElem = scene.resolve(victimLink);
+
+                    if (attackerElem == null || victimElem == null) {
+                        complete = true;
+                        return;
+                    }
+
+                    final Entity[] extracted = new Entity[2];
+                    attackerElem.ifPresent(e -> extracted[0] = e);
+                    victimElem.ifPresent(e -> extracted[1] = e);
+
+                    if (!(extracted[0] instanceof LivingEntity attackerEntity) || !(extracted[1] instanceof LivingEntity victimEntity)) {
+                        return;
+                    }
+
+                    LivingEntityPatch<?> attackerPatch = EpicFightCapabilities.getUnparameterizedEntityPatch(attackerEntity, LivingEntityPatch.class).orElse(null);
+                    LivingEntityPatch<?> victimPatch = EpicFightCapabilities.getUnparameterizedEntityPatch(victimEntity, LivingEntityPatch.class).orElse(null);
+
+                    if (attackerPatch == null || victimPatch == null) {
+                        return;
+                    }
+
+                    AnimationPlayer player = attackerPatch.getAnimator().getPlayerFor(null);
+
+                    if (player == null || player.isEmpty() || !(player.getAnimation() instanceof AttackAnimation attackAnim)) {
+                        return;
+                    }
+
+                    float elapsedTime = player.getElapsedTime();
+                    float prevElapsedTime = player.getPrevElapsedTime();
+
+                    if (elapsedTime >= attackAnim.getTotalTime() - 0.05f) {
+                        complete = true;
+                        return;
+                    }
+
+                    EntityState state = attackAnim.getState(attackerPatch, elapsedTime);
+
+                    if (state.attacking()) {
+                        AttackAnimation.Phase phase = attackAnim.getPhaseByTime(elapsedTime);
+
+                        if (phase != null) {
+                            List<Entity> hits = phase.getCollidingEntities(attackerPatch, attackAnim, prevElapsedTime, elapsedTime, 1.0F);
+
+                            if (hits.contains(victimEntity)) {
+                                complete = true;
+
+                                Vec3 hitPos = victimEntity.position().add(0, victimEntity.getBbHeight() * 0.5, 0);
+
+                                victimEntity.level().playSound(
+                                        null, hitPos.x, hitPos.y, hitPos.z,
+                                        attackerPatch.getWeaponHitSound(phase.hand), SoundSource.PLAYERS, 1.0F, 1.0F
+                                );
+
+                                try {
+                                    yesman.epicfight.particle.HitParticleType particleType = attackerPatch.getWeaponHitParticle(phase.hand);
+                                    if (particleType != null) {
+                                        victimEntity.level().addParticle(
+                                                particleType,
+                                                hitPos.x, hitPos.y, hitPos.z, 0, 0, 0
+                                        );
+                                    }
+                                } catch (Exception ignored) {}
+                            }
+                        }
                     }
                 }
             });
